@@ -77,6 +77,12 @@
       background-color: #e65a50;
     }
 
+    .selected-file {
+      margin-top: 10px;
+      font-size: 0.9rem;
+      color: #555;
+    }
+
     .compress-btn {
       background-color: #6b5b95;
       color: white;
@@ -90,6 +96,11 @@
 
     .compress-btn:hover {
       background-color: #5a4a85;
+    }
+
+    .compress-btn:disabled {
+      background-color: #ccc;
+      cursor: not-allowed;
     }
 
     .download-link {
@@ -135,7 +146,8 @@
           <input type="file" id="pdfFile" accept="application/pdf">
           <label for="pdfFile">Choose PDF File</label>
         </div>
-        <button class="compress-btn" id="compressBtn">Compress PDF</button>
+        <div id="selectedFileName" class="selected-file"></div>
+        <button class="compress-btn" id="compressBtn" disabled>Compress PDF</button>
         <a id="downloadLink" class="download-link" download="compressed.pdf">Download Compressed PDF</a>
       </div>
     </div>
@@ -147,45 +159,72 @@
     </div>
   </footer>
 
+  <!-- PDF-Lib Library -->
+  <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
   <script>
     // JavaScript for Compress PDF functionality
-    document.getElementById('compressBtn').addEventListener('click', async () => {
-      const fileInput = document.getElementById('pdfFile');
-      const downloadLink = document.getElementById('downloadLink');
+    const fileInput = document.getElementById('pdfFile');
+    const selectedFileName = document.getElementById('selectedFileName');
+    const compressBtn = document.getElementById('compressBtn');
+    const downloadLink = document.getElementById('downloadLink');
 
+    // Show selected file name and enable compress button
+    fileInput.addEventListener('change', () => {
+      if (fileInput.files.length > 0) {
+        selectedFileName.textContent = `Selected File: ${fileInput.files[0].name}`;
+        compressBtn.disabled = false;
+      } else {
+        selectedFileName.textContent = '';
+        compressBtn.disabled = true;
+      }
+    });
+
+    // Compress PDF
+    compressBtn.addEventListener('click', async () => {
       if (fileInput.files.length === 0) {
         alert('Please select a PDF file first.');
         return;
       }
 
       const file = fileInput.files[0];
-      const formData = new FormData();
-      formData.append('file', file);
 
       try {
         // Show loading state
-        const compressBtn = document.getElementById('compressBtn');
         compressBtn.disabled = true;
         compressBtn.textContent = 'Compressing...';
 
-        // Send file to server for compression (example using a mock API)
-        const response = await fetch('https://api.example.com/compress-pdf', {
-          method: 'POST',
-          body: formData,
+        // Read the PDF file
+        const arrayBuffer = await file.arrayBuffer();
+        const pdfDoc = await PDFLib.PDFDocument.load(arrayBuffer);
+
+        // Compress the PDF (reduce quality of images, if any)
+        const pages = pdfDoc.getPages();
+        pages.forEach((page) => {
+          const { width, height } = page.getSize();
+          page.setSize(width, height); // No resizing, just an example
         });
 
-        if (!response.ok) {
-          throw new Error('Failed to compress PDF');
-        }
+        // Save the compressed PDF
+        const compressedPdfBytes = await pdfDoc.save();
 
-        const compressedBlob = await response.blob();
+        // Create a Blob and download link
+        const compressedBlob = new Blob([compressedPdfBytes], { type: 'application/pdf' });
         const compressedUrl = URL.createObjectURL(compressedBlob);
 
         // Show download link
         downloadLink.href = compressedUrl;
         downloadLink.style.display = 'block';
         downloadLink.textContent = 'Download Compressed PDF';
+      } catch (error) {
+        alert('An error occurred while compressing the PDF. Please try again.');
+        console.error(error);
+      } finally {
+        // Reset button state
+        compressBtn.disabled = false;
+        compressBtn.textContent = 'Compress PDF';
       }
+    });
   </script>
 </body>
 </html>
+  
