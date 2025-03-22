@@ -1,144 +1,226 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>I Love PDF - Your Ultimate PDF Solution</title>
-    <style>
-        /* General Styles */
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 0;
-            background-color: #f4f4f9;
-            color: #333;
-        }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>I Love PDF Tools</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <style>
+    /* General Styles */
+    body {
+      font-family: 'Poppins', sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f4f4f9;
+      color: #333;
+    }
 
-        header {
-            background-color: #4CAF50;
-            color: white;
-            padding: 20px;
-            text-align: center;
-        }
+    .container {
+      width: 90%;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
 
-        header h1 {
-            margin: 0;
-            font-size: 2.5rem;
-        }
+    /* Header Styles */
+    header {
+      background-color: #4a90e2;
+      color: white;
+      padding: 20px 0;
+      text-align: center;
+    }
 
-        header p {
-            margin: 5px 0 0;
-            font-size: 1.2rem;
-        }
+    header h1 {
+      margin: 0;
+      font-size: 2.5rem;
+    }
 
-        main {
-            padding: 20px;
-            padding-bottom: 60px; /* To prevent footer overlap */
-        }
+    header p {
+      margin: 5px 0 0;
+      font-size: 1.2rem;
+    }
 
-        .features {
-            max-width: 1200px;
-            margin: 0 auto;
-        }
+    /* Tools Grid Styles */
+    .tools-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 20px;
+      padding: 40px 0;
+    }
 
-        .features h2 {
-            text-align: center;
-            font-size: 2rem;
-            margin-bottom: 20px;
-            color: #4CAF50;
-        }
+    .tool-box {
+      background-color: #fff;
+      border-radius: 10px;
+      padding: 20px;
+      text-align: center;
+      color: white;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
 
-        .feature-list {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 15px;
-            justify-content: center;
-        }
+    .tool-box:hover {
+      transform: translateY(-10px);
+      box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+    }
 
-        .feature-item {
-            background-color: #ffffff;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-            font-size: 1rem;
-            text-align: center;
-            width: 200px;
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-            cursor: pointer;
-        }
+    .tool-box i {
+      font-size: 2.5rem;
+      margin-bottom: 10px;
+    }
 
-        .feature-item:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
-        }
+    .tool-box h3 {
+      margin: 0;
+      font-size: 1.2rem;
+    }
 
-        .feature-item:nth-child(odd) {
-            background-color: #ffeb3b; /* Yellow */
-        }
+    /* Footer Styles */
+    footer {
+      background-color: #333;
+      color: white;
+      text-align: center;
+      padding: 10px 0;
+      margin-top: 40px;
+    }
 
-        .feature-item:nth-child(even) {
-            background-color: #03a9f4; /* Blue */
-        }
+    footer p {
+      margin: 0;
+      font-size: 0.9rem;
+    }
 
-        .feature-item:nth-child(3n) {
-            background-color: #e91e63; /* Pink */
-        }
+    /* Responsive Design */
+    @media (max-width: 768px) {
+      .tools-grid {
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      }
 
-        .feature-item:nth-child(4n) {
-            background-color: #8bc34a; /* Green */
-        }
+      header h1 {
+        font-size: 2rem;
+      }
 
-        .feature-item:nth-child(5n) {
-            background-color: #ff5722; /* Orange */
-        }
-
-        footer {
-            background-color: #333;
-            color: white;
-            text-align: center;
-            padding: 10px;
-            position: fixed;
-            bottom: 0;
-            width: 100%;
-        }
-    </style>
+      header p {
+        font-size: 1rem;
+      }
+    }
+  </style>
 </head>
 <body>
-    <header>
-        <h1>Welcome to I Love PDF</h1>
-        <p>Your Ultimate PDF Solution</p>
-    </header>
+  <header>
+    <div class="container">
+      <h1>I Love PDF Tools</h1>
+      <p>Your one-stop solution for all PDF needs</p>
+    </div>
+  </header>
 
-    <main>
-        <section class="features">
-            <h2>Our Features</h2>
-            <div class="feature-list">
-                <div class="feature-item">1. Compress PDF – Reduce the size of your PDF files without compromising quality.</div>
-                <div class="feature-item">2. Convert PDF to Word – Easily convert PDFs into editable Word documents.</div>
-                <div class="feature-item">3. Convert PDF to Excel – Transform PDF tables into Excel spreadsheets.</div>
-                <div class="feature-item">4. Convert PDF to PowerPoint – Turn PDFs into PowerPoint presentations.</div>
-                <div class="feature-item">5. Convert PDF to JPG – Extract images from PDFs or convert entire pages to JPG.</div>
-                <div class="feature-item">6. Merge PDF – Combine multiple PDF files into one.</div>
-                <div class="feature-item">7. Split PDF – Divide a single PDF into multiple documents.</div>
-                <div class="feature-item">8. Edit PDF – Add text, images, or shapes to your PDFs.</div>
-                <div class="feature-item">9. Resize PDF – Adjust the dimensions of your PDF pages.</div>
-                <div class="feature-item">10. Rotate PDF – Rotate PDF pages to the correct orientation.</div>
-                <div class="feature-item">11. Unlock PDF – Remove password protection from PDFs.</div>
-                <div class="feature-item">12. Protect PDF – Add passwords to secure your PDFs.</div>
-                <div class="feature-item">13. PDF to HTML – Convert PDFs to HTML for web use.</div>
-                <div class="feature-item">14. PDF to Text – Extract text from PDFs for easy editing.</div>
-                <div class="feature-item">15. Add Watermark – Insert watermarks to protect your documents.</div>
-                <div class="feature-item">16. Remove Watermark – Erase unwanted watermarks from PDFs.</div>
-                <div class="feature-item">17. Organize PDF Pages – Rearrange, delete, or insert pages in your PDF.</div>
-                <div class="feature-item">18. PDF Signer – Add digital signatures to your PDFs.</div>
-                <div class="feature-item">19. PDF Reader – View and annotate PDFs directly in your browser.</div>
-                <div class="feature-item">20. PDF Forms – Fill out and create interactive PDF forms.</div>
-            </div>
-        </section>
-    </main>
+  <main>
+    <div class="container">
+      <div class="tools-grid">
+        <!-- Tool 1 -->
+        <div class="tool-box" style="background-color: #ff6f61;">
+          <i class="fas fa-file-pdf"></i>
+          <h3>Compress PDF</h3>
+        </div>
+        <!-- Tool 2 -->
+        <div class="tool-box" style="background-color: #6b5b95;">
+          <i class="fas fa-expand"></i>
+          <h3>Resize PDF</h3>
+        </div>
+        <!-- Tool 3 -->
+        <div class="tool-box" style="background-color: #88b04b;">
+          <i class="fas fa-file-export"></i>
+          <h3>Convert PDF</h3>
+        </div>
+        <!-- Tool 4 -->
+        <div class="tool-box" style="background-color: #ffcc00;">
+          <i class="fas fa-edit"></i>
+          <h3>Edit PDF</h3>
+        </div>
+        <!-- Tool 5 -->
+        <div class="tool-box" style="background-color: #ff6f61;">
+          <i class="fas fa-lock"></i>
+          <h3>Protect PDF</h3>
+        </div>
+        <!-- Tool 6 -->
+        <div class="tool-box" style="background-color: #6b5b95;">
+          <i class="fas fa-unlock"></i>
+          <h3>Unlock PDF</h3>
+        </div>
+        <!-- Tool 7 -->
+        <div class="tool-box" style="background-color: #88b04b;">
+          <i class="fas fa-file-import"></i>
+          <h3>Merge PDF</h3>
+        </div>
+        <!-- Tool 8 -->
+        <div class="tool-box" style="background-color: #ffcc00;">
+          <i class="fas fa-file-export"></i>
+          <h3>Split PDF</h3>
+        </div>
+        <!-- Tool 9 -->
+        <div class="tool-box" style="background-color: #ff6f61;">
+          <i class="fas fa-file-signature"></i>
+          <h3>Sign PDF</h3>
+        </div>
+        <!-- Tool 10 -->
+        <div class="tool-box" style="background-color: #6b5b95;">
+          <i class="fas fa-file-image"></i>
+          <h3>PDF to Image</h3>
+        </div>
+        <!-- Tool 11 -->
+        <div class="tool-box" style="background-color: #88b04b;">
+          <i class="fas fa-file-word"></i>
+          <h3>PDF to Word</h3>
+        </div>
+        <!-- Tool 12 -->
+        <div class="tool-box" style="background-color: #ffcc00;">
+          <i class="fas fa-file-excel"></i>
+          <h3>PDF to Excel</h3>
+        </div>
+        <!-- Tool 13 -->
+        <div class="tool-box" style="background-color: #ff6f61;">
+          <i class="fas fa-file-powerpoint"></i>
+          <h3>PDF to PPT</h3>
+        </div>
+        <!-- Tool 14 -->
+        <div class="tool-box" style="background-color: #6b5b95;">
+          <i class="fas fa-file-archive"></i>
+          <h3>PDF to ZIP</h3>
+        </div>
+        <!-- Tool 15 -->
+        <div class="tool-box" style="background-color: #88b04b;">
+          <i class="fas fa-file-alt"></i>
+          <h3>Extract Text</h3>
+        </div>
+        <!-- Tool 16 -->
+        <div class="tool-box" style="background-color: #ffcc00;">
+          <i class="fas fa-file-invoice"></i>
+          <h3>Add Watermark</h3>
+        </div>
+        <!-- Tool 17 -->
+        <div class="tool-box" style="background-color: #ff6f61;">
+          <i class="fas fa-file-download"></i>
+          <h3>Download PDF</h3>
+        </div>
+        <!-- Tool 18 -->
+        <div class="tool-box" style="background-color: #6b5b95;">
+          <i class="fas fa-file-upload"></i>
+          <h3>Upload PDF</h3>
+        </div>
+        <!-- Tool 19 -->
+        <div class="tool-box" style="background-color: #88b04b;">
+          <i class="fas fa-file-prescription"></i>
+          <h3>OCR PDF</h3>
+        </div>
+        <!-- Tool 20 -->
+        <div class="tool-box" style="background-color: #ffcc00;">
+          <i class="fas fa-file-contract"></i>
+          <h3>Rotate PDF</h3>
+        </div>
+      </div>
+    </div>
+  </main>
 
-    <footer>
-        <p>&copy; 2023 I Love PDF. All rights reserved.</p>
-    </footer>
+  <footer>
+    <div class="container">
+      <p>&copy; 2023 I Love PDF Tools. All rights reserved.</p>
+    </div>
+  </footer>
 </body>
 </html>
