@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Convert PDF - I Love PDF Tools</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <style>
+    /* General Styles */
+    body {
+      font-family: 'Poppins', sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f4f4f9;
+      color: #333;
+    }
+
+    .container {
+      width: 90%;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    /* Header Styles */
+    header {
+      background-color: #88b04b;
+      color: white;
+      padding: 20px 0;
+      text-align: center;
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: 2.5rem;
+    }
+
+    header p {
+      margin: 5px 0 0;
+      font-size: 1.2rem;
+    }
+
+    /* Tool Section Styles */
+    .tool-section {
+      background-color: white;
+      border-radius: 10px;
+      padding: 20px;
+      margin-top: 20px;
+      text-align: center;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    .tool-section h2 {
+      margin-bottom: 20px;
+      font-size: 1.8rem;
+    }
+
+    .file-input {
+      margin-bottom: 20px;
+    }
+
+    .file-input input {
+      display: none;
+    }
+
+    .file-input label {
+      background-color: #88b04b;
+      color: white;
+      padding: 10px 20px;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+
+    .file-input label:hover {
+      background-color: #769f3b;
+    }
+
+    .selected-file {
+      margin-top: 10px;
+      font-size: 0.9rem;
+      color: #555;
+    }
+
+    .convert-btn {
+      background-color: #88b04b;
+      color: white;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 1rem;
+      transition: background-color 0.3s ease;
+    }
+
+    .convert-btn:hover {
+      background-color: #769f3b;
+    }
+
+    .convert-btn:disabled {
+      background-color: #ccc;
+      cursor: not-allowed;
+    }
+
+    .download-link {
+      display: none;
+      margin-top: 20px;
+      color: #88b04b;
+      text-decoration: none;
+      font-size: 1.2rem;
+    }
+
+    .download-link:hover {
+      text-decoration: underline;
+    }
+
+    /* Footer Styles */
+    footer {
+      background-color: #333;
+      color: white;
+      text-align: center;
+      padding: 10px 0;
+      margin-top: 40px;
+    }
+
+    footer p {
+      margin: 0;
+      font-size: 0.9rem;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="container">
+      <h1>Convert PDF</h1>
+      <p>Convert your PDF files to images easily</p>
+    </div>
+  </header>
+
+  <main>
+    <div class="container">
+      <div class="tool-section">
+        <h2>Upload your PDF file</h2>
+        <div class="file-input">
+          <input type="file" id="pdfFile" accept="application/pdf">
+          <label for="pdfFile">Choose PDF File</label>
+        </div>
+        <div id="selectedFileName" class="selected-file"></div>
+
+        <button class="convert-btn" id="convertBtn" disabled>Convert PDF to Images</button>
+        <a id="downloadLink" class="download-link" download="converted-images.zip">Download Converted Images (ZIP)</a>
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    <div class="container">
+      <p>&copy; 2023 I Love PDF Tools. All rights reserved.</p>
+    </div>
+  </footer>
+
+  <!-- PDF.js Library for Rendering PDF to Images -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.11.338/pdf.min.js"></script>
+  <!-- JSZip Library for Creating ZIP Files -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.7.1/jszip.min.js"></script>
+  <script>
+    // JavaScript for Convert PDF functionality
+    const fileInput = document.getElementById('pdfFile');
+    const selectedFileName = document.getElementById('selectedFileName');
+    const convertBtn = document.getElementById('convertBtn');
+    const downloadLink = document.getElementById('downloadLink');
+
+    // Show selected file name and enable convert button
+    fileInput.addEventListener('change', () => {
+      if (fileInput.files.length > 0) {
+        selectedFileName.textContent = `Selected File: ${fileInput.files[0].name}`;
+        convertBtn.disabled = false;
+      } else {
+        selectedFileName.textContent = '';
+        convertBtn.disabled = true;
+      }
+    });
+
+    // Convert PDF to Images
+    convertBtn.addEventListener('click', async () => {
+      if (fileInput.files.length === 0) {
+        alert('Please select a PDF file first.');
+        return;
+      }
+
+      const file = fileInput.files[0];
+
+      try {
+        // Show loading state
+        convertBtn.disabled = true;
+        convertBtn.textContent = 'Converting...';
+
+        // Convert PDF to Images
+        const images = await convertPdfToImages(file);
+
+        // Create a ZIP file for multiple images
+        const zip = new JSZip();
+        images.forEach((image, index) => {
+          zip.file(`page-${index + 1}.png`, image.split(',')[1], { base64: true });
+        });
+
+        const zipBlob = await zip.generateAsync({ type: 'blob' });
+        const zipUrl = URL.createObjectURL(zipBlob);
+
+        // Show download link
+        downloadLink.href = zipUrl;
+        downloadLink.style.display = 'block';
+        downloadLink.textContent = 'Download Converted Images (ZIP)';
+      } catch (error) {
+        alert('An error occurred while converting the PDF. Please try again.');
+        console.error(error);
+      } finally {
+        // Reset button state
+        convertBtn.disabled = false;
+        convertBtn.textContent = 'Convert PDF to Images';
+      }
+    });
+
+    // Function to convert PDF to Images
+    async function convertPdfToImages(file) {
+      const arrayBuffer = await file.arrayBuffer();
+      const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer });
+      const pdf = await loadingTask.promise;
+      const images = [];
+
+      for (let i = 1; i <= pdf.numPages; i++) {
+        const page = await pdf.getPage(i);
+        const viewport = page.getViewport({ scale: 2 });
+        const canvas = document.createElement('canvas');
+        const context = canvas.getContext('2d');
+        canvas.height = viewport.height;
+        canvas.width = viewport.width;
+
+        await page.render({ canvasContext: context, viewport }).promise;
+        const image = canvas.toDataURL('image/png');
+        images.push(image);
+      }
+
+      return images;
+    }
+  </script>
+</body>
+</html>
