@@ -185,16 +185,7 @@
         downloadLink.href = compressedUrl;
         downloadLink.style.display = 'block';
         downloadLink.textContent = 'Download Compressed PDF';
-      } catch (error) {
-        alert('An error occurred while compressing the PDF. Please try again.');
-        console.error(error);
-      } finally {
-        // Reset button state
-        const compressBtn = document.getElementById('compressBtn');
-        compressBtn.disabled = false;
-        compressBtn.textContent = 'Compress PDF';
       }
-    });
   </script>
 </body>
 </html>
