@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Resize Image - I Love Tools</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <style>
+    body {
+      font-family: 'Poppins', sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f4f4f9;
+      color: #333;
+      line-height: 1.6;
+    }
+    
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    
+    header {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+    
+    h1 {
+      color: #6b5b95;
+      margin-bottom: 10px;
+    }
+    
+    .tool-container {
+      background: white;
+      border-radius: 10px;
+      padding: 30px;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+    
+    .upload-area {
+      border: 2px dashed #ccc;
+      border-radius: 8px;
+      padding: 40px;
+      text-align: center;
+      margin-bottom: 20px;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    
+    .upload-area:hover {
+      border-color: #6b5b95;
+      background: #f8f7fc;
+    }
+    
+    .upload-area i {
+      font-size: 48px;
+      color: #6b5b95;
+      margin-bottom: 15px;
+    }
+    
+    #fileInput {
+      display: none;
+    }
+    
+    .controls {
+      margin: 20px 0;
+    }
+    
+    .control-group {
+      margin-bottom: 20px;
+    }
+    
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 600;
+    }
+    
+    input[type="range"], 
+    input[type="number"],
+    select {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      margin-bottom: 10px;
+    }
+    
+    .dimension-controls {
+      display: flex;
+      gap: 15px;
+    }
+    
+    .dimension-box {
+      flex: 1;
+    }
+    
+    .ratio-lock {
+      display: flex;
+      align-items: center;
+      margin-bottom: 15px;
+    }
+    
+    .ratio-lock input {
+      width: auto;
+      margin-right: 10px;
+    }
+    
+    .preview-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+      margin-top: 30px;
+    }
+    
+    .image-box {
+      flex: 1;
+      min-width: 300px;
+    }
+    
+    .image-box img {
+      max-width: 100%;
+      border-radius: 8px;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+    }
+    
+    .stats {
+      background: #f8f9fa;
+      padding: 15px;
+      border-radius: 8px;
+      margin-top: 15px;
+    }
+    
+    button {
+      background: #6b5b95;
+      color: white;
+      border: none;
+      padding: 12px 25px;
+      border-radius: 5px;
+      font-size: 16px;
+      cursor: pointer;
+      transition: background 0.3s;
+      font-weight: 600;
+      margin-top: 10px;
+      margin-right: 10px;
+    }
+    
+    button:hover {
+      background: #554a7a;
+    }
+    
+    button:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+    }
+    
+    .file-info {
+      margin-top: 10px;
+      font-size: 14px;
+      color: #666;
+    }
+    
+    .tabs {
+      display: flex;
+      margin-bottom: 20px;
+      border-bottom: 1px solid #ddd;
+    }
+    
+    .tab {
+      padding: 10px 20px;
+      cursor: pointer;
+      border-bottom: 3px solid transparent;
+    }
+    
+    .tab.active {
+      border-bottom: 3px solid #6b5b95;
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1><i class="fas fa-expand-arrows-alt"></i> Resize Image</h1>
+      <p>Change image dimensions while maintaining quality</p>
+    </header>
+    
+    <div class="tool-container">
+      <div class="upload-area" id="uploadArea">
+        <i class="fas fa-cloud-upload-alt"></i>
+        <h3>Drag & Drop Your Image Here</h3>
+        <p>or click to browse files</p>
+        <input type="file" id="fileInput" accept="image/*">
+      </div>
+      
+      <div class="controls" id="controls" style="display: none;">
+        <div class="tabs">
+          <div class="tab active" id="pixelTab">Pixels</div>
+          <div class="tab" id="percentTab">Percentage</div>
+        </div>
+        
+        <div id="pixelControls">
+          <div class="dimension-controls">
+            <div class="dimension-box">
+              <label for="width">Width (px)</label>
+              <input type="number" id="width" min="1" step="1">
+            </div>
+            <div class="dimension-box">
+              <label for="height">Height (px)</label>
+              <input type="number" id="height" min="1" step="1">
+            </div>
+          </div>
+          <div class="ratio-lock">
+            <input type="checkbox" id="lockRatio" checked>
+            <label for="lockRatio">Maintain aspect ratio</label>
+          </div>
+        </div>
+        
+        <div id="percentControls" style="display: none;">
+          <div class="control-group">
+            <label for="resizePercent">Resize Percentage</label>
+            <input type="range" id="resizePercent" min="10" max="200" value="100">
+            <span id="percentValue">100%</span>
+          </div>
+        </div>
+        
+        <div class="control-group">
+          <label for="imageFormat">Output Format</label>
+          <select id="imageFormat">
+            <option value="original">Original Format</option>
+            <option value="jpeg">JPEG</option>
+            <option value="png">PNG</option>
+            <option value="webp">WebP</option>
+          </select>
+        </div>
+        
+        <button id="resizeBtn">Resize Image</button>
+        <button id="downloadBtn" disabled>Download Resized Image</button>
+        
+        <div class="file-info" id="fileInfo"></div>
+      </div>
+      
+      <div class="preview-container" id="previewContainer" style="display: none;">
+        <div class="image-box">
+          <h3>Original Image</h3>
+          <img id="originalImage" src="" alt="Original Image">
+          <div class="stats" id="originalStats"></div>
+        </div>
+        
+        <div class="image-box">
+          <h3>Resized Image</h3>
+          <img id="resizedImage" src="" alt="Resized Image">
+          <div class="stats" id="resizedStats"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const uploadArea = document.getElementById('uploadArea');
+      const fileInput = document.getElementById('fileInput');
+      const controls = document.getElementById('controls');
+      const previewContainer = document.getElementById('previewContainer');
+      const resizeBtn = document.getElementById('resizeBtn');
+      const downloadBtn = document.getElementById('downloadBtn');
+      const originalImage = document.getElementById('originalImage');
+      const resizedImage = document.getElementById('resizedImage');
+      const originalStats = document.getElementById('originalStats');
+      const resizedStats = document.getElementById('resizedStats');
+      const fileInfo = document.getElementById('fileInfo');
+      const pixelTab = document.getElementById('pixelTab');
+      const percentTab = document.getElementById('percentTab');
+      const pixelControls = document.getElementById('pixelControls');
+      const percentControls = document.getElementById('percentControls');
+      const widthInput = document.getElementById('width');
+      const heightInput = document.getElementById('height');
+      const lockRatio = document.getElementById('lockRatio');
+      const resizePercent = document.getElementById('resizePercent');
+      const percentValue = document.getElementById('percentValue');
+      const imageFormat = document.getElementById('imageFormat');
+      
+      let originalFile = null;
+      let resizedBlob = null;
+      let originalWidth = 0;
+      let originalHeight = 0;
+      let aspectRatio = 1;
+      
+      // Handle drag and drop
+      uploadArea.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        uploadArea.style.borderColor = '#6b5b95';
+        uploadArea.style.backgroundColor = '#f8f7fc';
+      });
+      
+      uploadArea.addEventListener('dragleave', () => {
+        uploadArea.style.borderColor = '#ccc';
+        uploadArea.style.backgroundColor = 'white';
+      });
+      
+      uploadArea.addEventListener('drop', (e) => {
+        e.preventDefault();
+        uploadArea.style.borderColor = '#ccc';
+        uploadArea.style.backgroundColor = 'white';
+        
+        if (e.dataTransfer.files.length) {
+          handleFile(e.dataTransfer.files[0]);
+        }
+      });
+      
+      // Handle click to browse
+      uploadArea.addEventListener('click', () => {
+        fileInput.click();
+      });
+      
+      // Handle file selection
+      fileInput.addEventListener('change', () => {
+        if (fileInput.files.length) {
+          handleFile(fileInput.files[0]);
+        }
+      });
+      
+      // Tab switching
+      pixelTab.addEventListener('click', () => {
+        pixelTab.classList.add('active');
+        percentTab.classList.remove('active');
+        pixelControls.style.display = 'block';
+        percentControls.style.display = 'none';
+      });
+      
+      percentTab.addEventListener('click', () => {
+        percentTab.classList.add('active');
+        pixelTab.classList.remove('active');
+        percentControls.style.display = 'block';
+        pixelControls.style.display = 'none';
+      });
+      
+      // Update percentage value display
+      resizePercent.addEventListener('input', () => {
+        percentValue.textContent = resizePercent.value + '%';
+      });
+      
+      // Maintain aspect ratio when width changes
+      widthInput.addEventListener('input', () => {
+        if (lockRatio.checked && widthInput.value) {
+          heightInput.value = Math.round(widthInput.value / aspectRatio);
+        }
+      });
+      
+      // Maintain aspect ratio when height changes
+      heightInput.addEventListener('input', () => {
+        if (lockRatio.checked && heightInput.value) {
+          widthInput.value = Math.round(heightInput.value * aspectRatio);
+        }
+      });
+      
+      // Resize button handler
+      resizeBtn.addEventListener('click', resizeImage);
+      
+      // Download button handler
+      downloadBtn.addEventListener('click', () => {
+        if (resizedBlob) {
+          const format = imageFormat.value === 'original' 
+            ? originalFile.type.split('/')[1] 
+            : imageFormat.value;
+          const url = URL.createObjectURL(resizedBlob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `resized_${originalFile.name.replace(/\.[^/.]+$/, '')}.${format}`;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+        }
+      });
+      
+      function handleFile(file) {
+        if (!file.type.match('image.*')) {
+          alert('Please select an image file (JPEG, PNG, etc.)');
+          return;
+        }
+        
+        originalFile = file;
+        
+        // Display file info
+        fileInfo.innerHTML = `
+          <strong>Selected File:</strong> ${file.name}<br>
+          <strong>Type:</strong> ${file.type}<br>
+          <strong>Size:</strong> ${formatFileSize(file.size)}
+        `;
+        
+        // Show controls
+        controls.style.display = 'block';
+        
+        // Preview original image
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          originalImage.src = e.target.result;
+          
+          // Display original image stats
+          originalStats.innerHTML = `
+            <strong>Dimensions:</strong> <span id="originalDims">Calculating...</span><br>
+            <strong>Size:</strong> ${formatFileSize(file.size)}
+          `;
+          
+          // Get image dimensions and set initial resize values
+          const img = new Image();
+          img.onload = function() {
+            originalWidth = this.width;
+            originalHeight = this.height;
+            aspectRatio = originalWidth / originalHeight;
+            
+            document.getElementById('originalDims').textContent = 
+              `${originalWidth} × ${originalHeight} px`;
+            
+            // Set initial dimensions
+            widthInput.value = originalWidth;
+            heightInput.value = originalHeight;
+          };
+          img.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+      }
+      
+      function resizeImage() {
+        if (!originalFile) return;
+        
+        resizeBtn.disabled = true;
+        resizeBtn.textContent = 'Resizing...';
+        
+        const reader = new FileReader();
+        
+        reader.onload = function(event) {
+          const img = new Image();
+          img.onload = function() {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            
+            // Calculate new dimensions
+            let newWidth, newHeight;
+            
+            if (pixelTab.classList.contains('active')) {
+              // Pixel-based resizing
+              newWidth = parseInt(widthInput.value);
+              newHeight = parseInt(heightInput.value);
+            } else {
+              // Percentage-based resizing
+              const percent = parseInt(resizePercent.value) / 100;
+              newWidth = Math.round(originalWidth * percent);
+              newHeight = Math.round(originalHeight * percent);
+            }
+            
+            canvas.width = newWidth;
+            canvas.height = newHeight;
+            
+            // Draw image on canvas with new dimensions
+            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+            
+            // Determine output format
+            let format = imageFormat.value;
+            if (format === 'original') {
+              format = originalFile.type.split('/')[1];
+            }
+            
+            // Convert to blob
+            canvas.toBlob(function(blob) {
+              resizedBlob = blob;
+              
+              // Display resized image
+              const resizedUrl = URL.createObjectURL(blob);
+              resizedImage.src = resizedUrl;
+              
+              // Display resized image stats
+              resizedStats.innerHTML = `
+                <strong>Dimensions:</strong> ${newWidth} × ${newHeight} px<br>
+                <strong>Size:</strong> ${formatFileSize(blob.size)}<br>
+                <strong>Format:</strong> ${format.toUpperCase()}
+              `;
+              
+              // Show preview and enable download
+              previewContainer.style.display = 'flex';
+              downloadBtn.disabled = false;
+              
+              resizeBtn.disabled = false;
+              resizeBtn.textContent = 'Resize Image';
+            }, `image/${format}`, 0.92); // 0.92 quality for JPEG
+          };
+          
+          img.src = event.target.result;
+        };
+        
+        reader.readAsDataURL(originalFile);
+      }
+      
+      function formatFileSize(bytes) {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+      }
+    });
+  </script>
+</body>
+</html>
