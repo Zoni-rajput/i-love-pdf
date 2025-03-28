@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Metadata Viewer/Editor</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background-color: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .upload-area {
+            border: 2px dashed #7f8c8d;
+            border-radius: 8px;
+            padding: 40px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-bottom: 20px;
+            background-color: #f8f9fa;
+        }
+        .upload-area:hover {
+            border-color: #3498db;
+            background-color: #eaf2f8;
+        }
+        #fileInput {
+            display: none;
+        }
+        .preview-container {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        #imagePreview {
+            max-width: 100%;
+            max-height: 300px;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+        .metadata-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+        .metadata-section {
+            flex: 1;
+            min-width: 300px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        .btn {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+        .btn:hover {
+            background-color: #2980b9;
+        }
+        .loading {
+            display: none;
+            text-align: center;
+            margin: 20px 0;
+        }
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            border-radius: 50%;
+            border-top: 4px solid #3498db;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .edit-btn {
+            background-color: #f39c12;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        .edit-btn:hover {
+            background-color: #e67e22;
+        }
+        input[type="text"] {
+            width: 100%;
+            padding: 5px;
+            border: 1px solid #ddd;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Image Metadata Viewer/Editor</h1>
+        
+        <div class="upload-area" id="uploadArea">
+            <h2>Upload Image</h2>
+            <p>Drag & drop your image here or click to browse</p>
+            <input type="file" id="fileInput" accept="image/*">
+        </div>
+        
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>Reading metadata...</p>
+        </div>
+        
+        <div class="preview-container" id="previewContainer" style="display: none;">
+            <img id="imagePreview" src="" alt="Image Preview">
+        </div>
+        
+        <div class="metadata-container" id="metadataContainer" style="display: none;">
+            <div class="metadata-section">
+                <h3>Basic Information</h3>
+                <table id="basicInfoTable">
+                    <thead>
+                        <tr>
+                            <th>Property</th>
+                            <th>Value</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+            
+            <div class="metadata-section">
+                <h3>EXIF Data</h3>
+                <table id="exifTable">
+                    <thead>
+                        <tr>
+                            <th>Tag</th>
+                            <th>Value</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+        
+        <button class="btn" id="saveBtn" style="display: none;">Save Changes</button>
+    </div>
+
+    <!-- Include EXIF.js library -->
+    <script src="https://cdn.jsdelivr.net/npm/exif-js"></script>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // DOM elements
+            const uploadArea = document.getElementById('uploadArea');
+            const fileInput = document.getElementById('fileInput');
+            const loading = document.getElementById('loading');
+            const previewContainer = document.getElementById('previewContainer');
+            const imagePreview = document.getElementById('imagePreview');
+            const metadataContainer = document.getElementById('metadataContainer');
+            const basicInfoTable = document.getElementById('basicInfoTable').querySelector('tbody');
+            const exifTable = document.getElementById('exifTable').querySelector('tbody');
+            const saveBtn = document.getElementById('saveBtn');
+            
+            // Variables
+            let currentFile = null;
+            let originalMetadata = {};
+            
+            // Event listeners
+            uploadArea.addEventListener('click', () => fileInput.click());
+            uploadArea.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                uploadArea.style.borderColor = '#3498db';
+                uploadArea.style.backgroundColor = '#eaf2f8';
+            });
+            uploadArea.addEventListener('dragleave', () => {
+                uploadArea.style.borderColor = '#7f8c8d';
+                uploadArea.style.backgroundColor = '#f8f9fa';
+            });
+            uploadArea.addEventListener('drop', (e) => {
+                e.preventDefault();
+                uploadArea.style.borderColor = '#7f8c8d';
+                uploadArea.style.backgroundColor = '#f8f9fa';
+                
+                if (e.dataTransfer.files.length) {
+                    handleFile(e.dataTransfer.files[0]);
+                }
+            });
+            fileInput.addEventListener('change', () => {
+                if (fileInput.files.length) handleFile(fileInput.files[0]);
+            });
+            
+            saveBtn.addEventListener('click', saveChanges);
+            
+            // Handle file upload
+            function handleFile(file) {
+                if (!file.type.match('image.*')) {
+                    alert('Please select an image file (JPEG, PNG, etc.)');
+                    return;
+                }
+                
+                currentFile = file;
+                
+                // Show loading indicator
+                loading.style.display = 'block';
+                previewContainer.style.display = 'none';
+                metadataContainer.style.display = 'none';
+                saveBtn.style.display = 'none';
+                
+                // Display image preview
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    imagePreview.src = e.target.result;
+                    previewContainer.style.display = 'block';
+                    
+                    // Read EXIF data
+                    EXIF.getData(imagePreview, function() {
+                        loading.style.display = 'none';
+                        displayMetadata(this);
+                    });
+                };
+                reader.readAsDataURL(file);
+            }
+            
+            // Display metadata
+            function displayMetadata(img) {
+                // Clear previous data
+                basicInfoTable.innerHTML = '';
+                exifTable.innerHTML = '';
+                
+                // Store original metadata
+                originalMetadata = {
+                    basic: {},
+                    exif: EXIF.getAllTags(img)
+                };
+                
+                // Basic information
+                addMetadataRow(basicInfoTable, 'File Name', currentFile.name);
+                addMetadataRow(basicInfoTable, 'File Size', formatFileSize(currentFile.size));
+                addMetadataRow(basicInfoTable, 'File Type', currentFile.type);
+                addMetadataRow(basicInfoTable, 'Last Modified', new Date(currentFile.lastModified).toLocaleString());
+                addMetadataRow(basicInfoTable, 'Dimensions', `${img.naturalWidth} × ${img.naturalHeight}`);
+                
+                // EXIF data
+                const allExifData = EXIF.getAllTags(img);
+                if (Object.keys(allExifData).length === 0) {
+                    exifTable.innerHTML = '<tr><td colspan="3">No EXIF data found</td></tr>';
+                } else {
+                    for (const [tag, value] of Object.entries(allExifData)) {
+                        addMetadataRow(exifTable, tag, formatExifValue(tag, value), true);
+                    }
+                }
+                
+                metadataContainer.style.display = 'flex';
+                saveBtn.style.display = 'block';
+            }
+            
+            // Add metadata row to table
+            function addMetadataRow(table, property, value, isEditable = false) {
+                const row = table.insertRow();
+                
+                const propertyCell = row.insertCell();
+                propertyCell.textContent = property;
+                
+                const valueCell = row.insertCell();
+                
+                if (isEditable) {
+                    const input = document.createElement('input');
+                    input.type = 'text';
+                    input.value = value;
+                    input.dataset.property = property;
+                    valueCell.appendChild(input);
+                    
+                    const actionCell = row.insertCell();
+                    const resetBtn = document.createElement('button');
+                    resetBtn.className = 'edit-btn';
+                    resetBtn.textContent = 'Reset';
+                    resetBtn.onclick = function() {
+                        input.value = formatExifValue(property, originalMetadata.exif[property]);
+                    };
+                    actionCell.appendChild(resetBtn);
+                } else {
+                    valueCell.textContent = value;
+                    row.insertCell(); // Empty action cell
+                }
+            }
+            
+            // Format EXIF values for display
+            function formatExifValue(tag, value) {
+                // Special formatting for certain EXIF tags
+                switch(tag) {
+                    case 'DateTimeOriginal':
+                    case 'DateTimeDigitized':
+                    case 'DateTime':
+                        return new Date(value).toLocaleString();
+                    case 'ExposureTime':
+                        return `${value} sec` + (value < 1 ? ` (1/${Math.round(1/value)})` : '');
+                    case 'FNumber':
+                        return `ƒ/${value}`;
+                    case 'FocalLength':
+                        return `${value} mm`;
+                    case 'GPSLatitude':
+                    case 'GPSLongitude':
+                        return value ? EXIF.pretty(value) : '';
+                    default:
+                        return value !== undefined ? value.toString() : '';
+                }
+            }
+            
+            // Format file size
+            function formatFileSize(bytes) {
+                if (bytes === 0) return '0 Bytes';
+                const k = 1024;
+                const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+                const i = Math.floor(Math.log(bytes) / Math.log(k));
+                return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+            }
+            
+            // Save changes (simulated - actual EXIF writing requires server-side processing)
+            function saveChanges() {
+                const changes = {};
+                const inputs = document.querySelectorAll('input[type="text"]');
+                
+                inputs.forEach(input => {
+                    const property = input.dataset.property;
+                    const newValue = input.value;
+                    const originalValue = originalMetadata.exif[property];
+                    
+                    if (newValue !== formatExifValue(property, originalValue)) {
+                        changes[property] = newValue;
+                    }
+                });
+                
+                if (Object.keys(changes).length === 0) {
+                    alert('No changes detected');
+                    return;
+                }
+                
+                // In a real app, you would send the changes to a server to modify the EXIF data
+                alert(`The following changes would be saved in a real application:\n\n${
+                    Object.entries(changes).map(([k, v]) => `${k}: ${v}`).join('\n')
+                }\n\nNote: Actual EXIF modification requires server-side processing.`);
+            }
+        });
+    </script>
+</body>
+</html>
