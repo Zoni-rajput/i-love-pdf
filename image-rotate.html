@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Rotate Image - I Love Tools</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <style>
+    body {
+      font-family: 'Poppins', sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f4f4f9;
+      color: #333;
+      line-height: 1.6;
+    }
+    
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    
+    header {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+    
+    h1 {
+      color: #ff6f61;
+      margin-bottom: 10px;
+    }
+    
+    .tool-container {
+      background: white;
+      border-radius: 10px;
+      padding: 30px;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+    
+    .upload-area {
+      border: 2px dashed #ccc;
+      border-radius: 8px;
+      padding: 40px;
+      text-align: center;
+      margin-bottom: 20px;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    
+    .upload-area:hover {
+      border-color: #ff6f61;
+      background: #fff9f9;
+    }
+    
+    .upload-area i {
+      font-size: 48px;
+      color: #ff6f61;
+      margin-bottom: 15px;
+    }
+    
+    #fileInput {
+      display: none;
+    }
+    
+    .controls {
+      margin: 20px 0;
+    }
+    
+    .control-group {
+      margin-bottom: 20px;
+    }
+    
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 600;
+    }
+    
+    .image-preview {
+      max-width: 100%;
+      max-height: 400px;
+      display: block;
+      margin: 0 auto 20px;
+      border-radius: 8px;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+    }
+    
+    .rotation-buttons {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+    
+    .rotation-btn {
+      background: #f0f0f0;
+      border: none;
+      padding: 10px 15px;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: all 0.3s;
+      font-weight: 600;
+    }
+    
+    .rotation-btn:hover {
+      background: #ddd;
+    }
+    
+    .rotation-btn.active {
+      background: #ff6f61;
+      color: white;
+    }
+    
+    .custom-rotation {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    input[type="range"] {
+      flex: 1;
+    }
+    
+    .degree-value {
+      width: 50px;
+      text-align: center;
+    }
+    
+    button {
+      background: #ff6f61;
+      color: white;
+      border: none;
+      padding: 12px 25px;
+      border-radius: 5px;
+      font-size: 16px;
+      cursor: pointer;
+      transition: background 0.3s;
+      font-weight: 600;
+      margin-top: 10px;
+      margin-right: 10px;
+    }
+    
+    button:hover {
+      background: #e65a50;
+    }
+    
+    button:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+    }
+    
+    .file-info {
+      margin-top: 10px;
+      font-size: 14px;
+      color: #666;
+    }
+    
+    .preview-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+      margin-top: 30px;
+    }
+    
+    .image-box {
+      flex: 1;
+      min-width: 300px;
+    }
+    
+    .image-box img {
+      max-width: 100%;
+      border-radius: 8px;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+    }
+    
+    .stats {
+      background: #f8f9fa;
+      padding: 15px;
+      border-radius: 8px;
+      margin-top: 15px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1><i class="fas fa-redo"></i> Rotate Image</h1>
+      <p>Rotate your images by 90° increments or custom angles</p>
+    </header>
+    
+    <div class="tool-container">
+      <div class="upload-area" id="uploadArea">
+        <i class="fas fa-cloud-upload-alt"></i>
+        <h3>Drag & Drop Your Image Here</h3>
+        <p>or click to browse files</p>
+        <input type="file" id="fileInput" accept="image/*">
+      </div>
+      
+      <div class="controls" id="controls" style="display: none;">
+        <img id="imagePreview" class="image-preview" src="" alt="Image Preview">
+        
+        <div class="control-group">
+          <label>Quick Rotation</label>
+          <div class="rotation-buttons">
+            <button class="rotation-btn" data-degrees="90">90° Right</button>
+            <button class="rotation-btn" data-degrees="-90">90° Left</button>
+            <button class="rotation-btn" data-degrees="180">180° Flip</button>
+            <button class="rotation-btn" data-degrees="0">Reset</button>
+          </div>
+        </div>
+        
+        <div class="control-group">
+          <label for="customRotation">Custom Rotation: <span id="degreeValue">0</span>°</label>
+          <div class="custom-rotation">
+            <input type="range" id="customRotation" min="-180" max="180" value="0">
+            <span class="degree-value" id="degreeDisplay">0°</span>
+          </div>
+        </div>
+        
+        <button id="rotateBtn">Apply Rotation</button>
+        <button id="downloadBtn" disabled>Download Rotated Image</button>
+        
+        <div class="file-info" id="fileInfo"></div>
+      </div>
+      
+      <div class="preview-container" id="previewContainer" style="display: none;">
+        <div class="image-box">
+          <h3>Original Image</h3>
+          <img id="originalImage" src="" alt="Original Image">
+          <div class="stats" id="originalStats"></div>
+        </div>
+        
+        <div class="image-box">
+          <h3>Rotated Image</h3>
+          <img id="rotatedImage" src="" alt="Rotated Image">
+          <div class="stats" id="rotatedStats"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const uploadArea = document.getElementById('uploadArea');
+      const fileInput = document.getElementById('fileInput');
+      const controls = document.getElementById('controls');
+      const imagePreview = document.getElementById('imagePreview');
+      const rotationBtns = document.querySelectorAll('.rotation-btn');
+      const customRotation = document.getElementById('customRotation');
+      const degreeValue = document.getElementById('degreeValue');
+      const degreeDisplay = document.getElementById('degreeDisplay');
+      const rotateBtn = document.getElementById('rotateBtn');
+      const downloadBtn = document.getElementById('downloadBtn');
+      const originalImage = document.getElementById('originalImage');
+      const rotatedImage = document.getElementById('rotatedImage');
+      const originalStats = document.getElementById('originalStats');
+      const rotatedStats = document.getElementById('rotatedStats');
+      const fileInfo = document.getElementById('fileInfo');
+      const previewContainer = document.getElementById('previewContainer');
+      
+      let originalFile = null;
+      let rotatedBlob = null;
+      let currentRotation = 0;
+      let originalWidth = 0;
+      let originalHeight = 0;
+      
+      // Handle drag and drop
+      uploadArea.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        uploadArea.style.borderColor = '#ff6f61';
+        uploadArea.style.backgroundColor = '#fff9f9';
+      });
+      
+      uploadArea.addEventListener('dragleave', () => {
+        uploadArea.style.borderColor = '#ccc';
+        uploadArea.style.backgroundColor = 'white';
+      });
+      
+      uploadArea.addEventListener('drop', (e) => {
+        e.preventDefault();
+        uploadArea.style.borderColor = '#ccc';
+        uploadArea.style.backgroundColor = 'white';
+        
+        if (e.dataTransfer.files.length) {
+          handleFile(e.dataTransfer.files[0]);
+        }
+      });
+      
+      // Handle click to browse
+      uploadArea.addEventListener('click', () => {
+        fileInput.click();
+      });
+      
+      // Handle file selection
+      fileInput.addEventListener('change', () => {
+        if (fileInput.files.length) {
+          handleFile(fileInput.files[0]);
+        }
+      });
+      
+      // Quick rotation buttons
+      rotationBtns.forEach(btn => {
+        btn.addEventListener('click', function() {
+          const degrees = parseInt(this.dataset.degrees);
+          currentRotation = degrees;
+          customRotation.value = degrees;
+          degreeValue.textContent = degrees;
+          degreeDisplay.textContent = degrees + '°';
+          previewRotation();
+        });
+      });
+      
+      // Custom rotation slider
+      customRotation.addEventListener('input', function() {
+        currentRotation = parseInt(this.value);
+        degreeValue.textContent = currentRotation;
+        degreeDisplay.textContent = currentRotation + '°';
+        previewRotation();
+      });
+      
+      // Rotate button handler
+      rotateBtn.addEventListener('click', applyRotation);
+      
+      // Download button handler
+      downloadBtn.addEventListener('click', () => {
+        if (rotatedBlob) {
+          const url = URL.createObjectURL(rotatedBlob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `rotated_${originalFile.name}`;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+        }
+      });
+      
+      function handleFile(file) {
+        if (!file.type.match('image.*')) {
+          alert('Please select an image file (JPEG, PNG, etc.)');
+          return;
+        }
+        
+        originalFile = file;
+        
+        // Display file info
+        fileInfo.innerHTML = `
+          <strong>Selected File:</strong> ${file.name}<br>
+          <strong>Type:</strong> ${file.type}<br>
+          <strong>Size:</strong> ${formatFileSize(file.size)}
+        `;
+        
+        // Show controls
+        controls.style.display = 'block';
+        
+        // Preview original image
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          originalImage.src = e.target.result;
+          imagePreview.src = e.target.result;
+          
+          // Display original image stats
+          originalStats.innerHTML = `
+            <strong>Dimensions:</strong> <span id="originalDims">Calculating...</span><br>
+            <strong>Size:</strong> ${formatFileSize(file.size)}
+          `;
+          
+          // Get image dimensions
+          const img = new Image();
+          img.onload = function() {
+            originalWidth = this.width;
+            originalHeight = this.height;
+            
+            document.getElementById('originalDims').textContent = 
+              `${originalWidth} × ${originalHeight} px`;
+          };
+          img.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+      }
+      
+      function previewRotation() {
+        // Just update the preview image's transform
+        imagePreview.style.transform = `rotate(${currentRotation}deg)`;
+      }
+      
+      function applyRotation() {
+        if (!originalFile) return;
+        
+        rotateBtn.disabled = true;
+        rotateBtn.textContent = 'Rotating...';
+        
+        const reader = new FileReader();
+        
+        reader.onload = function(event) {
+          const img = new Image();
+          img.onload = function() {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            
+            // Calculate new canvas size to fit rotated image
+            if (currentRotation % 180 === 0) {
+              // 0° or 180° rotation - dimensions stay the same
+              canvas.width = img.width;
+              canvas.height = img.height;
+            } else {
+              // 90° or 270° rotation - dimensions swap
+              canvas.width = img.height;
+              canvas.height = img.width;
+            }
+            
+            // For custom angles, we need to calculate the bounding box
+            if (Math.abs(currentRotation) !== 90 && 
+                Math.abs(currentRotation) !== 180 && 
+                currentRotation !== 0) {
+              const rad = currentRotation * Math.PI / 180;
+              const sin = Math.abs(Math.sin(rad));
+              const cos = Math.abs(Math.cos(rad));
+              canvas.width = img.width * cos + img.height * sin;
+              canvas.height = img.width * sin + img.height * cos;
+            }
+            
+            // Center and rotate
+            ctx.translate(canvas.width / 2, canvas.height / 2);
+            ctx.rotate(currentRotation * Math.PI / 180);
+            ctx.drawImage(img, -img.width / 2, -img.height / 2);
+            
+            // Convert canvas to blob
+            canvas.toBlob(function(blob) {
+              rotatedBlob = blob;
+              
+              // Display rotated image
+              const rotatedUrl = URL.createObjectURL(blob);
+              rotatedImage.src = rotatedUrl;
+              
+              // Display rotated image stats
+              rotatedStats.innerHTML = `
+                <strong>Dimensions:</strong> ${canvas.width} × ${canvas.height} px<br>
+                <strong>Size:</strong> ${formatFileSize(blob.size)}<br>
+                <strong>Rotation:</strong> ${currentRotation}°
+              `;
+              
+              // Show preview and enable download
+              previewContainer.style.display = 'flex';
+              downloadBtn.disabled = false;
+              
+              rotateBtn.disabled = false;
+              rotateBtn.textContent = 'Apply Rotation';
+            }, originalFile.type, 0.95); // 0.95 quality
+          };
+          
+          img.src = event.target.result;
+        };
+        
+        reader.readAsDataURL(originalFile);
+      }
+      
+      function formatFileSize(bytes) {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+      }
+    });
+  </script>
+</body>
+</html>
