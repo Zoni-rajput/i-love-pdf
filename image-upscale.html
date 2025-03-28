@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Upscaler</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+            color: #333;
+        }
+        .container {
+            background-color: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .upload-area {
+            border: 2px dashed #7f8c8d;
+            border-radius: 8px;
+            padding: 40px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-bottom: 20px;
+            background-color: #f8f9fa;
+        }
+        .upload-area:hover {
+            border-color: #3498db;
+            background-color: #eaf2f8;
+        }
+        #fileInput {
+            display: none;
+        }
+        .comparison-container {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 30px;
+            flex-wrap: wrap;
+        }
+        .image-box {
+            flex: 1;
+            min-width: 300px;
+            margin: 10px;
+            text-align: center;
+        }
+        .image-box img {
+            max-width: 100%;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+        .image-label {
+            margin-top: 10px;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        .controls {
+            margin: 20px 0;
+            text-align: center;
+        }
+        .btn {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s;
+            margin: 0 10px;
+        }
+        .btn:hover {
+            background-color: #2980b9;
+        }
+        .btn:disabled {
+            background-color: #95a5a6;
+            cursor: not-allowed;
+        }
+        .slider-container {
+            margin: 20px auto;
+            max-width: 400px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+        input[type="range"] {
+            width: 100%;
+        }
+        .loading {
+            display: none;
+            text-align: center;
+            margin: 20px 0;
+        }
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            border-radius: 50%;
+            border-top: 4px solid #3498db;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .file-info {
+            margin-top: 10px;
+            font-size: 14px;
+            color: #666;
+        }
+        @media (max-width: 600px) {
+            .comparison-container {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Image Upscaler</h1>
+        
+        <div class="upload-area" id="uploadArea">
+            <h2>Upload Image</h2>
+            <p>Drag & drop your image here or click to browse</p>
+            <input type="file" id="fileInput" accept="image/*">
+        </div>
+        
+        <div class="controls">
+            <div class="slider-container">
+                <label for="scaleFactor">Upscale Factor: <span id="scaleValue">2x</span></label>
+                <input type="range" id="scaleFactor" min="2" max="4" step="1" value="2">
+            </div>
+            
+            <button class="btn" id="upscaleBtn" disabled>Upscale Image</button>
+            <button class="btn" id="downloadBtn" disabled>Download Result</button>
+        </div>
+        
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>Upscaling image...</p>
+        </div>
+        
+        <div class="comparison-container" id="comparisonContainer" style="display: none;">
+            <div class="image-box">
+                <img id="originalImage" src="" alt="Original Image">
+                <div class="image-label">Original Image</div>
+                <div class="file-info" id="originalInfo"></div>
+            </div>
+            <div class="image-box">
+                <img id="upscaledImage" src="" alt="Upscaled Image">
+                <div class="image-label">Upscaled Image</div>
+                <div class="file-info" id="upscaledInfo"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // DOM elements
+            const uploadArea = document.getElementById('uploadArea');
+            const fileInput = document.getElementById('fileInput');
+            const scaleFactor = document.getElementById('scaleFactor');
+            const scaleValue = document.getElementById('scaleValue');
+            const upscaleBtn = document.getElementById('upscaleBtn');
+            const downloadBtn = document.getElementById('downloadBtn');
+            const loading = document.getElementById('loading');
+            const comparisonContainer = document.getElementById('comparisonContainer');
+            const originalImage = document.getElementById('originalImage');
+            const upscaledImage = document.getElementById('upscaledImage');
+            const originalInfo = document.getElementById('originalInfo');
+            const upscaledInfo = document.getElementById('upscaledInfo');
+            
+            // Variables
+            let originalImageData = null;
+            let currentFile = null;
+            
+            // Event listeners
+            uploadArea.addEventListener('click', () => fileInput.click());
+            uploadArea.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                uploadArea.style.borderColor = '#3498db';
+                uploadArea.style.backgroundColor = '#eaf2f8';
+            });
+            uploadArea.addEventListener('dragleave', () => {
+                uploadArea.style.borderColor = '#7f8c8d';
+                uploadArea.style.backgroundColor = '#f8f9fa';
+            });
+            uploadArea.addEventListener('drop', (e) => {
+                e.preventDefault();
+                uploadArea.style.borderColor = '#7f8c8d';
+                uploadArea.style.backgroundColor = '#f8f9fa';
+                
+                if (e.dataTransfer.files.length) {
+                    handleFile(e.dataTransfer.files[0]);
+                }
+            });
+            fileInput.addEventListener('change', () => {
+                if (fileInput.files.length) handleFile(fileInput.files[0]);
+            });
+            
+            scaleFactor.addEventListener('input', function() {
+                scaleValue.textContent = this.value + 'x';
+            });
+            
+            upscaleBtn.addEventListener('click', upscaleImage);
+            downloadBtn.addEventListener('click', downloadImage);
+            
+            // Handle file upload
+            function handleFile(file) {
+                if (!file.type.match('image.*')) {
+                    alert('Please select an image file (JPEG, PNG, etc.)');
+                    return;
+                }
+                
+                currentFile = file;
+                
+                // Display file info
+                originalInfo.innerHTML = `
+                    <strong>File:</strong> ${file.name}<br>
+                    <strong>Size:</strong> ${formatFileSize(file.size)}<br>
+                    <strong>Type:</strong> ${file.type}
+                `;
+                
+                // Show editor tools
+                comparisonContainer.style.display = 'none';
+                downloadBtn.disabled = true;
+                
+                // Load the image
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const img = new Image();
+                    img.onload = function() {
+                        // Set original image
+                        originalImage.src = e.target.result;
+                        
+                        // Store original image data
+                        originalImageData = {
+                            img: img,
+                            src: e.target.result
+                        };
+                        
+                        // Enable upscale button
+                        upscaleBtn.disabled = false;
+                    };
+                    img.src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            }
+            
+            // Upscale image (simulated - real upscaling would use AI/ML)
+            function upscaleImage() {
+                if (!originalImageData) return;
+                
+                loading.style.display = 'block';
+                comparisonContainer.style.display = 'none';
+                
+                // Get scale factor
+                const factor = parseInt(scaleFactor.value);
+                
+                // Simulate processing delay
+                setTimeout(() => {
+                    // Create a canvas for the upscaled image
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+                    
+                    // Set canvas dimensions (scaled up)
+                    canvas.width = originalImageData.img.width * factor;
+                    canvas.height = originalImageData.img.height * factor;
+                    
+                    // Draw original image to canvas (scaled up)
+                    ctx.imageSmoothingEnabled = true;
+                    ctx.imageSmoothingQuality = 'high';
+                    ctx.drawImage(
+                        originalImageData.img, 
+                        0, 0, 
+                        originalImageData.img.width, originalImageData.img.height,
+                        0, 0, 
+                        canvas.width, canvas.height
+                    );
+                    
+                    // Convert canvas to image
+                    upscaledImage.src = canvas.toDataURL('image/jpeg', 0.9);
+                    
+                    // Update info
+                    upscaledInfo.innerHTML = `
+                        <strong>Dimensions:</strong> ${canvas.width} × ${canvas.height}<br>
+                        <strong>Scale Factor:</strong> ${factor}x
+                    `;
+                    
+                    // Show results
+                    comparisonContainer.style.display = 'flex';
+                    downloadBtn.disabled = false;
+                    loading.style.display = 'none';
+                }, 1000); // Simulate processing time
+            }
+            
+            // Download the upscaled image
+            function downloadImage() {
+                if (!upscaledImage.src) return;
+                
+                const link = document.createElement('a');
+                link.download = 'upscaled-' + currentFile.name;
+                link.href = upscaledImage.src;
+                link.click();
+            }
+            
+            // Format file size
+            function formatFileSize(bytes) {
+                if (bytes === 0) return '0 Bytes';
+                const k = 1024;
+                const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+                const i = Math.floor(Math.log(bytes) / Math.log(k));
+                return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+            }
+        });
+    </script>
+</body>
+</html>
