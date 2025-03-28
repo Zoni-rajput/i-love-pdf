@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Splitter & Combiner</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        .section {
+            border: 1px solid #ddd;
+            padding: 15px;
+            border-radius: 5px;
+        }
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        button {
+            padding: 8px 15px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        input, select {
+            padding: 8px;
+        }
+        #originalImage, #combinedImage {
+            max-width: 100%;
+            margin-top: 10px;
+            border: 1px solid #ccc;
+        }
+        .parts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 10px;
+            margin-top: 15px;
+        }
+        .part-image {
+            max-width: 100%;
+            border: 1px solid #eee;
+        }
+        .part-label {
+            font-size: 12px;
+            text-align: center;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Image Splitter & Combiner</h1>
+        
+        <div class="section">
+            <h2>1. Upload Image</h2>
+            <input type="file" id="imageUpload" accept="image/*">
+            <div>
+                <img id="originalImage" style="display: none;">
+            </div>
+        </div>
+        
+        <div class="section">
+            <h2>2. Split Image</h2>
+            <div class="controls">
+                <label for="rows">Rows:</label>
+                <select id="rows">
+                    <option value="1">1</option>
+                    <option value="2" selected>2</option>
+                    <option value="3">3</option>
+                    <option value="4">4</option>
+                </select>
+                
+                <label for="cols">Columns:</label>
+                <select id="cols">
+                    <option value="1">1</option>
+                    <option value="2" selected>2</option>
+                    <option value="3">3</option>
+                    <option value="4">4</option>
+                </select>
+                
+                <button id="splitBtn">Split Image</button>
+            </div>
+            
+            <div id="partsContainer" class="parts-grid"></div>
+        </div>
+        
+        <div class="section">
+            <h2>3. Combine Parts</h2>
+            <button id="combineBtn">Combine Parts</button>
+            <div>
+                <img id="combinedImage" style="display: none;">
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let originalImage = null;
+        let imageParts = [];
+        
+        // DOM elements
+        const imageUpload = document.getElementById('imageUpload');
+        const originalImageElement = document.getElementById('originalImage');
+        const rowsSelect = document.getElementById('rows');
+        const colsSelect = document.getElementById('cols');
+        const splitBtn = document.getElementById('splitBtn');
+        const partsContainer = document.getElementById('partsContainer');
+        const combineBtn = document.getElementById('combineBtn');
+        const combinedImageElement = document.getElementById('combinedImage');
+        
+        // Event listeners
+        imageUpload.addEventListener('change', handleImageUpload);
+        splitBtn.addEventListener('click', splitImage);
+        combineBtn.addEventListener('click', combineImage);
+        
+        // Functions
+        function handleImageUpload(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                originalImageElement.src = event.target.result;
+                originalImageElement.style.display = 'block';
+                originalImage = new Image();
+                originalImage.src = event.target.result;
+                
+                // Clear previous parts
+                partsContainer.innerHTML = '';
+                combinedImageElement.style.display = 'none';
+                imageParts = [];
+            };
+            reader.readAsDataURL(file);
+        }
+        
+        function splitImage() {
+            if (!originalImage) {
+                alert('Please upload an image first');
+                return;
+            }
+            
+            const rows = parseInt(rowsSelect.value);
+            const cols = parseInt(colsSelect.value);
+            
+            // Create a canvas to work with the image
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            
+            // Wait for image to load
+            originalImage.onload = function() {
+                const imgWidth = originalImage.width;
+                const imgHeight = originalImage.height;
+                
+                const partWidth = Math.floor(imgWidth / cols);
+                const partHeight = Math.floor(imgHeight / rows);
+                
+                // Clear previous parts
+                partsContainer.innerHTML = '';
+                imageParts = [];
+                
+                // Create and display each part
+                for (let i = 0; i < rows; i++) {
+                    for (let j = 0; j < cols; j++) {
+                        // Calculate coordinates
+                        const sx = j * partWidth;
+                        const sy = i * partHeight;
+                        const sw = (j === cols - 1) ? imgWidth - sx : partWidth;
+                        const sh = (i === rows - 1) ? imgHeight - sy : partHeight;
+                        
+                        // Create canvas for this part
+                        const partCanvas = document.createElement('canvas');
+                        partCanvas.width = sw;
+                        partCanvas.height = sh;
+                        const partCtx = partCanvas.getContext('2d');
+                        
+                        // Draw the part
+                        partCtx.drawImage(
+                            originalImage,
+                            sx, sy, sw, sh, // source rectangle
+                            0, 0, sw, sh    // destination rectangle
+                        );
+                        
+                        // Convert to data URL and store
+                        const partDataUrl = partCanvas.toDataURL('image/jpeg');
+                        imageParts.push({
+                            row: i,
+                            col: j,
+                            dataUrl: partDataUrl,
+                            width: sw,
+                            height: sh
+                        });
+                        
+                        // Display the part
+                        const partElement = document.createElement('div');
+                        partElement.innerHTML = `
+                            <img class="part-image" src="${partDataUrl}">
+                            <div class="part-label">Part ${i}-${j} (${sw}x${sh})</div>
+                        `;
+                        partsContainer.appendChild(partElement);
+                    }
+                }
+            };
+            
+            // Trigger onload if image is already loaded
+            if (originalImage.complete) {
+                originalImage.onload();
+            }
+        }
+        
+        function combineImage() {
+            if (imageParts.length === 0) {
+                alert('No parts to combine. Please split an image first.');
+                return;
+            }
+            
+            // Determine rows and cols from parts
+            const rows = Math.max(...imageParts.map(p => p.row)) + 1;
+            const cols = Math.max(...imageParts.map(p => p.col)) + 1;
+            
+            // Calculate combined dimensions
+            const firstColParts = imageParts.filter(p => p.col === 0);
+            const firstRowParts = imageParts.filter(p => p.row === 0);
+            
+            const totalWidth = firstRowParts.reduce((sum, part) => sum + part.width, 0);
+            const totalHeight = firstColParts.reduce((sum, part) => sum + part.height, 0);
+            
+            // Create combined canvas
+            const combinedCanvas = document.createElement('canvas');
+            combinedCanvas.width = totalWidth;
+            combinedCanvas.height = totalHeight;
+            const combinedCtx = combinedCanvas.getContext('2d');
+            
+            // Draw each part in position
+            imageParts.forEach(part => {
+                const img = new Image();
+                img.onload = function() {
+                    // Calculate position
+                    let x = 0;
+                    for (let c = 0; c < part.col; c++) {
+                        const colPart = imageParts.find(p => p.row === part.row && p.col === c);
+                        x += colPart.width;
+                    }
+                    
+                    let y = 0;
+                    for (let r = 0; r < part.row; r++) {
+                        const rowPart = imageParts.find(p => p.col === part.col && p.row === r);
+                        y += rowPart.height;
+                    }
+                    
+                    combinedCtx.drawImage(img, x, y, part.width, part.height);
+                    
+                    // If this is the last part, display the combined image
+                    if (part.row === rows - 1 && part.col === cols - 1) {
+                        combinedImageElement.src = combinedCanvas.toDataURL('image/jpeg');
+                        combinedImageElement.style.display = 'block';
+                    }
+                };
+                img.src = part.dataUrl;
+            });
+        }
+    </script>
+</body>
+</html>
