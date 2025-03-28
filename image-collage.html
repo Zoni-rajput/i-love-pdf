@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Step-by-Step Collage Maker</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        .upload-area {
+            border: 2px dashed #aaa;
+            border-radius: 8px;
+            padding: 30px;
+            text-align: center;
+            margin-bottom: 20px;
+            cursor: pointer;
+        }
+        #fileInput {
+            display: none;
+        }
+        .image-slots {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        .image-slot {
+            width: 150px;
+            height: 150px;
+            border: 2px dashed #ccc;
+            border-radius: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+        .image-slot img {
+            max-width: 100%;
+            max-height: 100%;
+            display: none;
+        }
+        .slot-number {
+            position: absolute;
+            font-size: 24px;
+            color: #aaa;
+        }
+        .layout-options {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            justify-content: center;
+        }
+        .layout-btn {
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .layout-btn.active {
+            border-color: #4285f4;
+            background: #f0f7ff;
+        }
+        #collageCanvas {
+            max-width: 100%;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            margin: 20px auto;
+            display: block;
+        }
+        .btn {
+            background: #4285f4;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 10px auto;
+            display: block;
+        }
+        .btn:disabled {
+            background: #aaa;
+            cursor: not-allowed;
+        }
+        .status {
+            text-align: center;
+            margin: 10px 0;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Step-by-Step Collage Maker</h1>
+        
+        <div class="status" id="status">Upload your first image</div>
+        
+        <div class="upload-area" id="uploadArea">
+            <p>Click to upload an image</p>
+            <input type="file" id="fileInput" accept="image/*">
+        </div>
+        
+        <div class="image-slots">
+            <div class="image-slot" id="slot1">
+                <span class="slot-number">1</span>
+                <img id="img1">
+            </div>
+            <div class="image-slot" id="slot2">
+                <span class="slot-number">2</span>
+                <img id="img2">
+            </div>
+        </div>
+        
+        <div class="layout-options">
+            <button class="layout-btn active" data-layout="side-by-side">Side by Side</button>
+            <button class="layout-btn" data-layout="top-bottom">Top & Bottom</button>
+            <button class="layout-btn" data-layout="diagonal">Diagonal</button>
+        </div>
+        
+        <canvas id="collageCanvas" width="800" height="400"></canvas>
+        
+        <button class="btn" id="downloadBtn" disabled>Download Collage</button>
+        <button class="btn" id="resetBtn">Reset</button>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const uploadArea = document.getElementById('uploadArea');
+            const fileInput = document.getElementById('fileInput');
+            const slot1 = document.getElementById('slot1');
+            const slot2 = document.getElementById('slot2');
+            const img1 = document.getElementById('img1');
+            const img2 = document.getElementById('img2');
+            const status = document.getElementById('status');
+            const collageCanvas = document.getElementById('collageCanvas');
+            const ctx = collageCanvas.getContext('2d');
+            const downloadBtn = document.getElementById('downloadBtn');
+            const resetBtn = document.getElementById('resetBtn');
+            const layoutBtns = document.querySelectorAll('.layout-btn');
+            
+            let images = [];
+            let currentSlot = 1;
+            let selectedLayout = 'side-by-side';
+            
+            // Event listeners
+            uploadArea.addEventListener('click', () => fileInput.click());
+            
+            fileInput.addEventListener('change', function() {
+                if (fileInput.files.length) {
+                    const file = fileInput.files[0];
+                    if (!file.type.match('image.*')) {
+                        alert('Please select an image file');
+                        return;
+                    }
+                    
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        if (currentSlot === 1) {
+                            img1.src = e.target.result;
+                            img1.style.display = 'block';
+                            slot1.querySelector('.slot-number').style.display = 'none';
+                            images[0] = new Image();
+                            images[0].src = e.target.result;
+                            currentSlot = 2;
+                            status.textContent = 'Now upload your second image';
+                        } else {
+                            img2.src = e.target.result;
+                            img2.style.display = 'block';
+                            slot2.querySelector('.slot-number').style.display = 'none';
+                            images[1] = new Image();
+                            images[1].src = e.target.result;
+                            generateCollage();
+                            downloadBtn.disabled = false;
+                            status.textContent = 'Both images uploaded! Choose layout';
+                        }
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+            
+            layoutBtns.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    layoutBtns.forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    selectedLayout = this.dataset.layout;
+                    if (images.length === 2) {
+                        generateCollage();
+                    }
+                });
+            });
+            
+            downloadBtn.addEventListener('click', function() {
+                const link = document.createElement('a');
+                link.download = '2-image-collage.png';
+                link.href = collageCanvas.toDataURL();
+                link.click();
+            });
+            
+            resetBtn.addEventListener('click', function() {
+                // Reset everything
+                img1.src = '';
+                img1.style.display = 'none';
+                img2.src = '';
+                img2.style.display = 'none';
+                slot1.querySelector('.slot-number').style.display = 'block';
+                slot2.querySelector('.slot-number').style.display = 'block';
+                images = [];
+                currentSlot = 1;
+                status.textContent = 'Upload your first image';
+                downloadBtn.disabled = true;
+                ctx.clearRect(0, 0, collageCanvas.width, collageCanvas.height);
+            });
+            
+            function generateCollage() {
+                // Clear canvas
+                ctx.fillStyle = 'white';
+                ctx.fillRect(0, 0, collageCanvas.width, collageCanvas.height);
+                
+                const image1 = images[0];
+                const image2 = images[1];
+                
+                // Wait for both images to load
+                image1.onload = image2.onload = function() {
+                    switch(selectedLayout) {
+                        case 'side-by-side':
+                            // Each image takes half width, full height
+                            const halfWidth = collageCanvas.width / 2;
+                            const ratio1 = collageCanvas.height / image1.height;
+                            const ratio2 = collageCanvas.height / image2.height;
+                            const width1 = image1.width * ratio1;
+                            const width2 = image2.width * ratio2;
+                            
+                            // Center images in their halves
+                            ctx.drawImage(image1, 
+                                (halfWidth - width1)/2, 
+                                0, 
+                                width1, 
+                                collageCanvas.height);
+                                
+                            ctx.drawImage(image2, 
+                                halfWidth + (halfWidth - width2)/2, 
+                                0, 
+                                width2, 
+                                collageCanvas.height);
+                            break;
+                            
+                        case 'top-bottom':
+                            // Each image takes full width, half height
+                            const halfHeight = collageCanvas.height / 2;
+                            const ratio3 = collageCanvas.width / image1.width;
+                            const ratio4 = collageCanvas.width / image2.width;
+                            const height1 = image1.height * ratio3;
+                            const height2 = image2.height * ratio4;
+                            
+                            // Center images in their halves
+                            ctx.drawImage(image1, 
+                                0, 
+                                (halfHeight - height1)/2, 
+                                collageCanvas.width, 
+                                height1);
+                                
+                            ctx.drawImage(image2, 
+                                0, 
+                                halfHeight + (halfHeight - height2)/2, 
+                                collageCanvas.width, 
+                                height2);
+                            break;
+                            
+                        case 'diagonal':
+                            // Diagonal layout (top-left and bottom-right)
+                            const ratio5 = (collageCanvas.width/2) / image1.width;
+                            const ratio6 = (collageCanvas.width/2) / image2.width;
+                            const scaledHeight1 = image1.height * ratio5;
+                            const scaledHeight2 = image2.height * ratio6;
+                            
+                            // First image top-left
+                            ctx.drawImage(image1, 
+                                0, 
+                                0, 
+                                collageCanvas.width/2, 
+                                scaledHeight1);
+                                
+                            // Second image bottom-right
+                            ctx.drawImage(image2, 
+                                collageCanvas.width/2, 
+                                collageCanvas.height - scaledHeight2, 
+                                collageCanvas.width/2, 
+                                scaledHeight2);
+                            break;
+                    }
+                };
+                
+                // Trigger onload if images are already loaded
+                if (image1.complete && image2.complete) {
+                    image1.onload();
+                    image2.onload();
+                }
+            }
+        });
+    </script>
+</body>
+</html>
