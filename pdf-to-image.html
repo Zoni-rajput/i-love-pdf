@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PDF to Image - I Love Tools</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.12.313/pdf.min.js"></script>
+  <style>
+    body {
+      font-family: 'Poppins', sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f4f4f9;
+      color: #333;
+      line-height: 1.6;
+    }
+    
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    
+    header {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+    
+    h1 {
+      color: #ffcc00;
+      margin-bottom: 10px;
+    }
+    
+    .tool-container {
+      background: white;
+      border-radius: 10px;
+      padding: 30px;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+    
+    .upload-area {
+      border: 2px dashed #ccc;
+      border-radius: 8px;
+      padding: 40px;
+      text-align: center;
+      margin-bottom: 20px;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    
+    .upload-area:hover {
+      border-color: #ffcc00;
+      background: #fffdf5;
+    }
+    
+    .upload-area i {
+      font-size: 48px;
+      color: #ffcc00;
+      margin-bottom: 15px;
+    }
+    
+    #fileInput {
+      display: none;
+    }
+    
+    .controls {
+      margin: 20px 0;
+    }
+    
+    .control-group {
+      margin-bottom: 20px;
+    }
+    
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 600;
+    }
+    
+    select, input[type="range"] {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      margin-bottom: 10px;
+    }
+    
+    .preview-container {
+      margin-top: 30px;
+      max-height: 400px;
+      overflow-y: auto;
+      border: 1px solid #eee;
+      border-radius: 8px;
+      padding: 10px;
+      display: none;
+    }
+    
+    .page-preview {
+      margin-bottom: 20px;
+      text-align: center;
+    }
+    
+    .page-preview img {
+      max-width: 100%;
+      max-height: 300px;
+      border-radius: 4px;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+    }
+    
+    .page-info {
+      margin-top: 5px;
+      font-size: 14px;
+      color: #666;
+    }
+    
+    button {
+      background: #ffcc00;
+      color: #333;
+      border: none;
+      padding: 12px 25px;
+      border-radius: 5px;
+      font-size: 16px;
+      cursor: pointer;
+      transition: background 0.3s;
+      font-weight: 600;
+      margin-top: 10px;
+      margin-right: 10px;
+    }
+    
+    button:hover {
+      background: #e6b800;
+    }
+    
+    button:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+    }
+    
+    .file-info {
+      margin-top: 10px;
+      font-size: 14px;
+      color: #666;
+    }
+    
+    .download-options {
+      display: flex;
+      gap: 10px;
+      margin-top: 20px;
+    }
+    
+    .quality-control {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    .quality-value {
+      width: 40px;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1><i class="fas fa-file-image"></i> PDF to Image Converter</h1>
+      <p>Convert PDF pages to high-quality images</p>
+    </header>
+    
+    <div class="tool-container">
+      <div class="upload-area" id="uploadArea">
+        <i class="fas fa-cloud-upload-alt"></i>
+        <h3>Drag & Drop Your PDF Here</h3>
+        <p>or click to browse files</p>
+        <input type="file" id="fileInput" accept=".pdf">
+      </div>
+      
+      <div class="controls" id="controls" style="display: none;">
+        <div class="control-group">
+          <label for="imageFormat">Output Format</label>
+          <select id="imageFormat">
+            <option value="jpeg">JPEG</option>
+            <option value="png">PNG</option>
+            <option value="webp">WebP</option>
+          </select>
+        </div>
+        
+        <div class="control-group" id="qualityGroup">
+          <label for="quality">Image Quality</label>
+          <div class="quality-control">
+            <input type="range" id="quality" min="10" max="100" value="85">
+            <span class="quality-value" id="qualityValue">85%</span>
+          </div>
+        </div>
+        
+        <div class="control-group">
+          <label for="scale">Resolution Scale</label>
+          <input type="range" id="scale" min="100" max="300" value="150" step="25">
+          <span id="scaleValue">150%</span>
+        </div>
+        
+        <div class="control-group">
+          <label for="pages">Pages to Convert</label>
+          <select id="pages">
+            <option value="all">All Pages</option>
+            <option value="first">First Page Only</option>
+            <option value="custom">Custom Range</option>
+          </select>
+          <div id="customRangeGroup" style="display: none; margin-top: 10px;">
+            <input type="text" id="pageRange" placeholder="Example: 1-3,5,7-9">
+          </div>
+        </div>
+        
+        <button id="convertBtn">Convert to Images</button>
+        
+        <div class="file-info" id="fileInfo"></div>
+        
+        <div class="preview-container" id="previewContainer">
+          <div id="pagePreviews"></div>
+        </div>
+        
+        <div class="download-options" id="downloadOptions" style="display: none;">
+          <button id="downloadAllBtn"><i class="fas fa-download"></i> Download All as ZIP</button>
+          <button id="downloadCurrentBtn"><i class="fas fa-image"></i> Download Current Page</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Initialize PDF.js
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.12.313/pdf.worker.min.js';
+    
+    document.addEventListener('DOMContentLoaded', function() {
+      const uploadArea = document.getElementById('uploadArea');
+      const fileInput = document.getElementById('fileInput');
+      const controls = document.getElementById('controls');
+      const previewContainer = document.getElementById('previewContainer');
+      const pagePreviews = document.getElementById('pagePreviews');
+      const convertBtn = document.getElementById('convertBtn');
+      const downloadAllBtn = document.getElementById('downloadAllBtn');
+      const downloadCurrentBtn = document.getElementById('downloadCurrentBtn');
+      const downloadOptions = document.getElementById('downloadOptions');
+      const fileInfo = document.getElementById('fileInfo');
+      const imageFormat = document.getElementById('imageFormat');
+      const quality = document.getElementById('quality');
+      const qualityValue = document.getElementById('qualityValue');
+      const scale = document.getElementById('scale');
+      const scaleValue = document.getElementById('scaleValue');
+      const pages = document.getElementById('pages');
+      const customRangeGroup = document.getElementById('customRangeGroup');
+      const pageRange = document.getElementById('pageRange');
+      
+      let pdfDoc = null;
+      let currentPage = 1;
+      let imageUrls = [];
+      
+      // Handle drag and drop
+      uploadArea.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        uploadArea.style.borderColor = '#ffcc00';
+        uploadArea.style.backgroundColor = '#fffdf5';
+      });
+      
+      uploadArea.addEventListener('dragleave', () => {
+        uploadArea.style.borderColor = '#ccc';
+        uploadArea.style.backgroundColor = 'white';
+      });
+      
+      uploadArea.addEventListener('drop', (e) => {
+        e.preventDefault();
+        uploadArea.style.borderColor = '#ccc';
+        uploadArea.style.backgroundColor = 'white';
+        
+        if (e.dataTransfer.files.length) {
+          handleFile(e.dataTransfer.files[0]);
+        }
+      });
+      
+      // Handle click to browse
+      uploadArea.addEventListener('click', () => {
+        fileInput.click();
+      });
+      
+      // Handle file selection
+      fileInput.addEventListener('change', () => {
+        if (fileInput.files.length) {
+          handleFile(fileInput.files[0]);
+        }
+      });
+      
+      // Update quality value display
+      quality.addEventListener('input', () => {
+        qualityValue.textContent = quality.value + '%';
+      });
+      
+      // Update scale value display
+      scale.addEventListener('input', () => {
+        scaleValue.textContent = scale.value + '%';
+      });
+      
+      // Show/hide custom range input
+      pages.addEventListener('change', () => {
+        customRangeGroup.style.display = pages.value === 'custom' ? 'block' : 'none';
+      });
+      
+      // Convert button handler
+      convertBtn.addEventListener('click', convertPdfToImages);
+      
+      // Download buttons
+      downloadAllBtn.addEventListener('click', downloadAllImages);
+      downloadCurrentBtn.addEventListener('click', downloadCurrentImage);
+      
+      function handleFile(file) {
+        if (!file.name.toLowerCase().endsWith('.pdf')) {
+          alert('Please select a PDF file');
+          return;
+        }
+        
+        // Display file info
+        fileInfo.innerHTML = `
+          <strong>Selected File:</strong> ${file.name}<br>
+          <strong>Size:</strong> ${formatFileSize(file.size)}
+        `;
+        
+        // Show controls
+        controls.style.display = 'block';
+        previewContainer.style.display = 'none';
+        downloadOptions.style.display = 'none';
+        pagePreviews.innerHTML = '';
+        imageUrls = [];
+        
+        // Load the PDF
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          const typedArray = new Uint8Array(e.target.result);
+          
+          // Load the PDF document
+          pdfjsLib.getDocument(typedArray).promise.then(function(pdf) {
+            pdfDoc = pdf;
+            fileInfo.innerHTML += `<br><strong>Pages:</strong> ${pdf.numPages}`;
+          }).catch(function(error) {
+            alert('Error loading PDF: ' + error.message);
+          });
+        };
+        reader.readAsArrayBuffer(file);
+      }
+      
+      async function convertPdfToImages() {
+        if (!pdfDoc) return;
+        
+        convertBtn.disabled = true;
+        convertBtn.textContent = 'Converting...';
+        pagePreviews.innerHTML = '';
+        imageUrls = [];
+        previewContainer.style.display = 'block';
+        
+        // Get user settings
+        const format = imageFormat.value;
+        const qualityValue = parseInt(quality.value) / 100;
+        const scaleValue = parseInt(scale.value) / 100;
+        
+        // Determine pages to convert
+        let pagesToConvert = [];
+        const totalPages = pdfDoc.numPages;
+        
+        switch(pages.value) {
+          case 'all':
+            pagesToConvert = Array.from({length: totalPages}, (_, i) => i + 1);
+            break;
+          case 'first':
+            pagesToConvert = [1];
+            break;
+          case 'custom':
+            pagesToConvert = parsePageRange(pageRange.value, totalPages);
+            if (pagesToConvert.length === 0) {
+              alert('Invalid page range. Example formats: "1-3,5,7-9"');
+              convertBtn.disabled = false;
+              convertBtn.textContent = 'Convert to Images';
+              return;
+            }
+            break;
+        }
+        
+        // Process each page
+        for (const pageNumber of pagesToConvert) {
+          try {
+            const page = await pdfDoc.getPage(pageNumber);
+            const viewport = page.getViewport({ scale: scaleValue });
+            
+            // Create canvas for rendering
+            const canvas = document.createElement('canvas');
+            const context = canvas.getContext('2d');
+            canvas.height = viewport.height;
+            canvas.width = viewport.width;
+            
+            // Render PDF page to canvas
+            await page.render({
+              canvasContext: context,
+              viewport: viewport
+            }).promise;
+            
+            // Convert canvas to image
+            const imageUrl = await canvasToImage(canvas, format, qualityValue);
+            imageUrls.push({ url: imageUrl, pageNumber });
+            
+            // Add preview
+            const pagePreview = document.createElement('div');
+            pagePreview.className = 'page-preview';
+            pagePreview.innerHTML = `
+              <img src="${imageUrl}" alt="Page ${pageNumber}">
+              <div class="page-info">Page ${pageNumber} (${canvas.width}×${canvas.height} px)</div>
+            `;
+            pagePreviews.appendChild(pagePreview);
+            
+          } catch (error) {
+            console.error('Error converting page', pageNumber, error);
+          }
+        }
+        
+        currentPage = 1;
+        downloadOptions.style.display = 'flex';
+        convertBtn.disabled = false;
+        convertBtn.textContent = 'Convert to Images';
+      }
+      
+      function canvasToImage(canvas, format, quality) {
+        return new Promise((resolve) => {
+          let mimeType;
+          switch(format) {
+            case 'jpeg': mimeType = 'image/jpeg'; break;
+            case 'png': mimeType = 'image/png'; break;
+            case 'webp': mimeType = 'image/webp'; break;
+          }
+          
+          canvas.toBlob((blob) => {
+            const url = URL.createObjectURL(blob);
+            resolve(url);
+          }, mimeType, quality);
+        });
+      }
+      
+      function parsePageRange(rangeStr, maxPages) {
+        if (!rangeStr.trim()) return [];
+        
+        const pages = new Set();
+        const parts = rangeStr.split(',');
+        
+        for (const part of parts) {
+          if (part.includes('-')) {
+            const [start, end] = part.split('-').map(Number);
+            if (isNaN(start) || isNaN(end) || start < 1 || end > maxPages || start > end) {
+              return [];
+            }
+            for (let i = start; i <= end; i++) {
+              pages.add(i);
+            }
+          } else {
+            const num = Number(part);
+            if (isNaN(num) || num < 1 || num > maxPages) {
+              return [];
+            }
+            pages.add(num);
+          }
+        }
+        
+        return Array.from(pages).sort((a, b) => a - b);
+      }
+      
+      function downloadCurrentImage() {
+        if (imageUrls.length === 0) return;
+        
+        const currentImage = imageUrls[currentPage - 1];
+        if (!currentImage) return;
+        
+        const a = document.createElement('a');
+        a.href = currentImage.url;
+        a.download = `page_${currentImage.pageNumber}.${imageFormat.value}`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+      }
+      
+      async function downloadAllImages() {
+        if (imageUrls.length === 0) return;
+        
+        // For multiple files, we'd ideally create a ZIP
+        // Here we'll download them one by one (for simplicity)
+        // In a production app, consider using JSZip library
+        
+        for (const img of imageUrls) {
+          const a = document.createElement('a');
+          a.href = img.url;
+          a.download = `page_${img.pageNumber}.${imageFormat.value}`;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          
+          // Small delay between downloads
+          await new Promise(resolve => setTimeout(resolve, 200));
+        }
+      }
+      
+      function formatFileSize(bytes) {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+      }
+    });
+  </script>
+</body>
+</html>
