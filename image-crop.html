@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Crop Image - I Love Tools</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.css">
+  <style>
+    body {
+      font-family: 'Poppins', sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f4f4f9;
+      color: #333;
+      line-height: 1.6;
+    }
+    
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    
+    header {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+    
+    h1 {
+      color: #ffcc00;
+      margin-bottom: 10px;
+    }
+    
+    .tool-container {
+      background: white;
+      border-radius: 10px;
+      padding: 30px;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+    
+    .upload-area {
+      border: 2px dashed #ccc;
+      border-radius: 8px;
+      padding: 40px;
+      text-align: center;
+      margin-bottom: 20px;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    
+    .upload-area:hover {
+      border-color: #ffcc00;
+      background: #fffdf5;
+    }
+    
+    .upload-area i {
+      font-size: 48px;
+      color: #ffcc00;
+      margin-bottom: 15px;
+    }
+    
+    #fileInput {
+      display: none;
+    }
+    
+    .controls {
+      margin: 20px 0;
+    }
+    
+    .control-group {
+      margin-bottom: 20px;
+    }
+    
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 600;
+    }
+    
+    .crop-container {
+      width: 100%;
+      height: 400px;
+      margin-bottom: 20px;
+      display: none;
+    }
+    
+    #image {
+      max-width: 100%;
+    }
+    
+    .preview-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+      margin-top: 30px;
+    }
+    
+    .image-box {
+      flex: 1;
+      min-width: 300px;
+    }
+    
+    .image-box img {
+      max-width: 100%;
+      border-radius: 8px;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+    }
+    
+    .stats {
+      background: #f8f9fa;
+      padding: 15px;
+      border-radius: 8px;
+      margin-top: 15px;
+    }
+    
+    button {
+      background: #ffcc00;
+      color: #333;
+      border: none;
+      padding: 12px 25px;
+      border-radius: 5px;
+      font-size: 16px;
+      cursor: pointer;
+      transition: background 0.3s;
+      font-weight: 600;
+      margin-top: 10px;
+      margin-right: 10px;
+    }
+    
+    button:hover {
+      background: #e6b800;
+    }
+    
+    button:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+    }
+    
+    .file-info {
+      margin-top: 10px;
+      font-size: 14px;
+      color: #666;
+    }
+    
+    .aspect-ratios {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 15px;
+      flex-wrap: wrap;
+    }
+    
+    .aspect-btn {
+      padding: 8px 15px;
+      background: #f0f0f0;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    
+    .aspect-btn:hover {
+      background: #ddd;
+    }
+    
+    .aspect-btn.active {
+      background: #ffcc00;
+      color: #333;
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1><i class="fas fa-crop"></i> Crop Image</h1>
+      <p>Select and crop any portion of your image</p>
+    </header>
+    
+    <div class="tool-container">
+      <div class="upload-area" id="uploadArea">
+        <i class="fas fa-cloud-upload-alt"></i>
+        <h3>Drag & Drop Your Image Here</h3>
+        <p>or click to browse files</p>
+        <input type="file" id="fileInput" accept="image/*">
+      </div>
+      
+      <div class="controls" id="controls" style="display: none;">
+        <div class="control-group">
+          <label>Aspect Ratio</label>
+          <div class="aspect-ratios">
+            <button class="aspect-btn" data-ratio="NaN">Free</button>
+            <button class="aspect-btn" data-ratio="1">Square (1:1)</button>
+            <button class="aspect-btn" data-ratio="16/9">Widescreen (16:9)</button>
+            <button class="aspect-btn" data-ratio="4/3">Standard (4:3)</button>
+            <button class="aspect-btn" data-ratio="3/2">Photo (3:2)</button>
+          </div>
+        </div>
+        
+        <div class="crop-container">
+          <img id="image" src="" alt="Image to crop">
+        </div>
+        
+        <button id="cropBtn" disabled>Crop Image</button>
+        <button id="downloadBtn" disabled>Download Cropped Image</button>
+        
+        <div class="file-info" id="fileInfo"></div>
+      </div>
+      
+      <div class="preview-container" id="previewContainer" style="display: none;">
+        <div class="image-box">
+          <h3>Original Image</h3>
+          <img id="originalImage" src="" alt="Original Image">
+          <div class="stats" id="originalStats"></div>
+        </div>
+        
+        <div class="image-box">
+          <h3>Cropped Image</h3>
+          <img id="croppedImage" src="" alt="Cropped Image">
+          <div class="stats" id="croppedStats"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const uploadArea = document.getElementById('uploadArea');
+      const fileInput = document.getElementById('fileInput');
+      const controls = document.getElementById('controls');
+      const cropContainer = document.querySelector('.crop-container');
+      const image = document.getElementById('image');
+      const cropBtn = document.getElementById('cropBtn');
+      const downloadBtn = document.getElementById('downloadBtn');
+      const originalImage = document.getElementById('originalImage');
+      const croppedImage = document.getElementById('croppedImage');
+      const originalStats = document.getElementById('originalStats');
+      const croppedStats = document.getElementById('croppedStats');
+      const fileInfo = document.getElementById('fileInfo');
+      const previewContainer = document.getElementById('previewContainer');
+      const aspectBtns = document.querySelectorAll('.aspect-btn');
+      
+      let originalFile = null;
+      let cropper = null;
+      let croppedBlob = null;
+      let originalWidth = 0;
+      let originalHeight = 0;
+      
+      // Handle drag and drop
+      uploadArea.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        uploadArea.style.borderColor = '#ffcc00';
+        uploadArea.style.backgroundColor = '#fffdf5';
+      });
+      
+      uploadArea.addEventListener('dragleave', () => {
+        uploadArea.style.borderColor = '#ccc';
+        uploadArea.style.backgroundColor = 'white';
+      });
+      
+      uploadArea.addEventListener('drop', (e) => {
+        e.preventDefault();
+        uploadArea.style.borderColor = '#ccc';
+        uploadArea.style.backgroundColor = 'white';
+        
+        if (e.dataTransfer.files.length) {
+          handleFile(e.dataTransfer.files[0]);
+        }
+      });
+      
+      // Handle click to browse
+      uploadArea.addEventListener('click', () => {
+        fileInput.click();
+      });
+      
+      // Handle file selection
+      fileInput.addEventListener('change', () => {
+        if (fileInput.files.length) {
+          handleFile(fileInput.files[0]);
+        }
+      });
+      
+      // Aspect ratio buttons
+      aspectBtns.forEach(btn => {
+        btn.addEventListener('click', function() {
+          aspectBtns.forEach(b => b.classList.remove('active'));
+          this.classList.add('active');
+          const ratio = eval(this.dataset.ratio);
+          if (cropper) {
+            cropper.setAspectRatio(ratio);
+          }
+        });
+      });
+      
+      // Crop button handler
+      cropBtn.addEventListener('click', cropImage);
+      
+      // Download button handler
+      downloadBtn.addEventListener('click', () => {
+        if (croppedBlob) {
+          const url = URL.createObjectURL(croppedBlob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `cropped_${originalFile.name}`;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+        }
+      });
+      
+      function handleFile(file) {
+        if (!file.type.match('image.*')) {
+          alert('Please select an image file (JPEG, PNG, etc.)');
+          return;
+        }
+        
+        originalFile = file;
+        
+        // Display file info
+        fileInfo.innerHTML = `
+          <strong>Selected File:</strong> ${file.name}<br>
+          <strong>Type:</strong> ${file.type}<br>
+          <strong>Size:</strong> ${formatFileSize(file.size)}
+        `;
+        
+        // Show controls
+        controls.style.display = 'block';
+        
+        // Preview original image
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          originalImage.src = e.target.result;
+          image.src = e.target.result;
+          
+          // Display original image stats
+          originalStats.innerHTML = `
+            <strong>Dimensions:</strong> <span id="originalDims">Calculating...</span><br>
+            <strong>Size:</strong> ${formatFileSize(file.size)}
+          `;
+          
+          // Get image dimensions
+          const img = new Image();
+          img.onload = function() {
+            originalWidth = this.width;
+            originalHeight = this.height;
+            
+            document.getElementById('originalDims').textContent = 
+              `${originalWidth} × ${originalHeight} px`;
+            
+            // Initialize cropper
+            initCropper();
+          };
+          img.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+      }
+      
+      function initCropper() {
+        // Show crop container
+        cropContainer.style.display = 'block';
+        
+        // Destroy previous cropper if exists
+        if (cropper) {
+          cropper.destroy();
+        }
+        
+        // Initialize cropper
+        cropper = new Cropper(image, {
+          aspectRatio: NaN, // Free ratio by default
+          viewMode: 1,
+          autoCropArea: 0.8,
+          responsive: true,
+          ready() {
+            cropBtn.disabled = false;
+          }
+        });
+      }
+      
+      function cropImage() {
+        if (!cropper) return;
+        
+        cropBtn.disabled = true;
+        cropBtn.textContent = 'Cropping...';
+        
+        // Get cropped canvas
+        const canvas = cropper.getCroppedCanvas({
+          minWidth: 1,
+          minHeight: 1,
+          maxWidth: 4096,
+          maxHeight: 4096,
+          fillColor: '#fff',
+          imageSmoothingEnabled: true,
+          imageSmoothingQuality: 'high',
+        });
+        
+        // Convert canvas to blob
+        canvas.toBlob(function(blob) {
+          croppedBlob = blob;
+          
+          // Display cropped image
+          const croppedUrl = URL.createObjectURL(blob);
+          croppedImage.src = croppedUrl;
+          
+          // Display cropped image stats
+          croppedStats.innerHTML = `
+            <strong>Dimensions:</strong> ${canvas.width} × ${canvas.height} px<br>
+            <strong>Size:</strong> ${formatFileSize(blob.size)}
+          `;
+          
+          // Show preview and enable download
+          previewContainer.style.display = 'flex';
+          downloadBtn.disabled = false;
+          
+          cropBtn.disabled = false;
+          cropBtn.textContent = 'Crop Image';
+        }, originalFile.type, 0.95); // 0.95 quality
+      }
+      
+      function formatFileSize(bytes) {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+      }
+    });
+  </script>
+</body>
+</html>
