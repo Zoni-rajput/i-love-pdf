@@ -1,0 +1,732 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Online Quiz Generator</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+            color: #333;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+        }
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 30px;
+        }
+        .quiz-setup, .quiz-questions, .quiz-results {
+            margin-bottom: 30px;
+            padding: 20px;
+            border-radius: 5px;
+            background: #f9f9f9;
+        }
+        .question {
+            margin-bottom: 25px;
+            padding: 15px;
+            background: white;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .options {
+            margin-top: 10px;
+        }
+        .option {
+            margin: 8px 0;
+            padding: 10px;
+            background: #e8f4f8;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        .option:hover {
+            background: #d0e3f0;
+        }
+        .option.selected {
+            background: #3498db;
+            color: white;
+        }
+        .correct {
+            background: #2ecc71 !important;
+            color: white;
+        }
+        .incorrect {
+            background: #e74c3c !important;
+            color: white;
+        }
+        button {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background 0.3s;
+        }
+        button:hover {
+            background: #2980b9;
+        }
+        .navigation {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+        }
+        .hidden {
+            display: none;
+        }
+        .progress-bar {
+            height: 10px;
+            background: #ecf0f1;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        .progress {
+            height: 100%;
+            background: #3498db;
+            border-radius: 5px;
+            width: 0%;
+            transition: width 0.3s;
+        }
+        .results {
+            text-align: center;
+        }
+        .score {
+            font-size: 24px;
+            font-weight: bold;
+            margin: 20px 0;
+        }
+        .question-type {
+            margin-top: 10px;
+            font-style: italic;
+            color: #7f8c8d;
+        }
+        textarea, input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            margin: 5px 0 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .add-option {
+            background: #27ae60;
+            margin-bottom: 15px;
+        }
+        .add-option:hover {
+            background: #219955;
+        }
+        .remove-option {
+            background: #e74c3c;
+            float: right;
+        }
+        .remove-option:hover {
+            background: #c0392b;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Online Quiz Generator</h1>
+        
+        <!-- Quiz Setup Section -->
+        <div class="quiz-setup" id="quizSetup">
+            <h2>Create Your Quiz</h2>
+            <div>
+                <label for="quizTitle">Quiz Title:</label>
+                <input type="text" id="quizTitle" placeholder="Enter quiz title">
+            </div>
+            <div>
+                <label for="quizDescription">Description:</label>
+                <textarea id="quizDescription" rows="3" placeholder="Enter quiz description"></textarea>
+            </div>
+            <button id="startAddingQuestions">Start Adding Questions</button>
+        </div>
+        
+        <!-- Question Creation Section -->
+        <div class="quiz-questions hidden" id="questionCreation">
+            <h2>Add Questions</h2>
+            <div id="questionsContainer"></div>
+            <button id="addQuestion">Add Another Question</button>
+            <button id="finishQuiz">Finish and Preview Quiz</button>
+        </div>
+        
+        <!-- Quiz Preview Section -->
+        <div class="quiz-questions hidden" id="quizPreview">
+            <h2 id="previewQuizTitle"></h2>
+            <p id="previewQuizDescription"></p>
+            <div class="progress-bar">
+                <div class="progress" id="quizProgress"></div>
+            </div>
+            <div id="quizQuestionsPreview"></div>
+            <div class="navigation">
+                <button id="prevQuestion" disabled>Previous</button>
+                <button id="nextQuestion">Next</button>
+                <button id="submitQuiz" class="hidden">Submit Quiz</button>
+            </div>
+        </div>
+        
+        <!-- Results Section -->
+        <div class="quiz-results hidden" id="quizResults">
+            <div class="results">
+                <h2>Quiz Results</h2>
+                <div class="score">Your Score: <span id="finalScore">0</span>/<span id="totalQuestions">0</span></div>
+                <p id="resultMessage"></p>
+                <button id="retakeQuiz">Retake Quiz</button>
+                <button id="createNewQuiz">Create New Quiz</button>
+            </div>
+            <div id="resultsDetails"></div>
+        </div>
+    </div>
+
+    <script>
+        // DOM Elements
+        const quizSetup = document.getElementById('quizSetup');
+        const questionCreation = document.getElementById('questionCreation');
+        const quizPreview = document.getElementById('quizPreview');
+        const quizResults = document.getElementById('quizResults');
+        const questionsContainer = document.getElementById('questionsContainer');
+        const quizQuestionsPreview = document.getElementById('quizQuestionsPreview');
+        const resultsDetails = document.getElementById('resultsDetails');
+        
+        // Buttons
+        const startAddingQuestionsBtn = document.getElementById('startAddingQuestions');
+        const addQuestionBtn = document.getElementById('addQuestion');
+        const finishQuizBtn = document.getElementById('finishQuiz');
+        const prevQuestionBtn = document.getElementById('prevQuestion');
+        const nextQuestionBtn = document.getElementById('nextQuestion');
+        const submitQuizBtn = document.getElementById('submitQuiz');
+        const retakeQuizBtn = document.getElementById('retakeQuiz');
+        const createNewQuizBtn = document.getElementById('createNewQuiz');
+        
+        // Quiz Data
+        let quizData = {
+            title: '',
+            description: '',
+            questions: []
+        };
+        
+        let currentQuestionIndex = 0;
+        let userAnswers = [];
+        let quizScore = 0;
+        
+        // Initialize the app
+        function init() {
+            startAddingQuestionsBtn.addEventListener('click', startAddingQuestions);
+            addQuestionBtn.addEventListener('click', addQuestion);
+            finishQuizBtn.addEventListener('click', finishQuizCreation);
+            prevQuestionBtn.addEventListener('click', showPreviousQuestion);
+            nextQuestionBtn.addEventListener('click', showNextQuestion);
+            submitQuizBtn.addEventListener('click', showResults);
+            retakeQuizBtn.addEventListener('click', retakeQuiz);
+            createNewQuizBtn.addEventListener('click', createNewQuiz);
+            
+            // Add first question by default
+            addQuestion();
+        }
+        
+        // Start adding questions
+        function startAddingQuestions() {
+            quizData.title = document.getElementById('quizTitle').value || 'Untitled Quiz';
+            quizData.description = document.getElementById('quizDescription').value || '';
+            
+            quizSetup.classList.add('hidden');
+            questionCreation.classList.remove('hidden');
+        }
+        
+        // Add a new question
+        function addQuestion() {
+            const questionId = quizData.questions.length;
+            
+            const questionDiv = document.createElement('div');
+            questionDiv.className = 'question';
+            questionDiv.innerHTML = `
+                <h3>Question ${questionId + 1}</h3>
+                <div>
+                    <label>Question Text:</label>
+                    <textarea id="questionText${questionId}" placeholder="Enter your question"></textarea>
+                </div>
+                <div>
+                    <label>Question Type:</label>
+                    <select id="questionType${questionId}">
+                        <option value="multiple">Multiple Choice</option>
+                        <option value="truefalse">True/False</option>
+                        <option value="shortanswer">Short Answer</option>
+                    </select>
+                </div>
+                <div id="optionsContainer${questionId}" class="options">
+                    <div class="options-list">
+                        <label>Options (mark correct answer with *):</label>
+                        <div class="option-input">
+                            <input type="text" id="option${questionId}-0" placeholder="Option 1 (* for correct answer)">
+                            <button class="remove-option" onclick="removeOption(this)">Remove</button>
+                        </div>
+                        <div class="option-input">
+                            <input type="text" id="option${questionId}-1" placeholder="Option 2 (* for correct answer)">
+                            <button class="remove-option" onclick="removeOption(this)">Remove</button>
+                        </div>
+                    </div>
+                    <button class="add-option" onclick="addNewOption(${questionId})">Add Option</button>
+                </div>
+                <button onclick="removeQuestion(${questionId})">Remove Question</button>
+            `;
+            
+            questionsContainer.appendChild(questionDiv);
+            
+            // Add to quiz data
+            quizData.questions.push({
+                id: questionId,
+                text: '',
+                type: 'multiple',
+                options: [],
+                correctAnswer: ''
+            });
+            
+            // Update question type event listener
+            document.getElementById(`questionType${questionId}`).addEventListener('change', function() {
+                updateQuestionType(questionId, this.value);
+            });
+        }
+        
+        // Update question type UI
+        function updateQuestionType(questionId, type) {
+            const optionsContainer = document.getElementById(`optionsContainer${questionId}`);
+            
+            if (type === 'truefalse') {
+                optionsContainer.innerHTML = `
+                    <label>Options:</label>
+                    <div class="option-input">
+                        <input type="text" id="option${questionId}-0" value="True" readonly>
+                    </div>
+                    <div class="option-input">
+                        <input type="text" id="option${questionId}-1" value="False" readonly>
+                    </div>
+                    <label>Correct Answer:</label>
+                    <select id="correctAnswer${questionId}">
+                        <option value="0">True</option>
+                        <option value="1">False</option>
+                    </select>
+                `;
+            } else if (type === 'shortanswer') {
+                optionsContainer.innerHTML = `
+                    <label>Correct Answer:</label>
+                    <input type="text" id="correctAnswer${questionId}" placeholder="Enter correct answer">
+                `;
+            } else {
+                optionsContainer.innerHTML = `
+                    <div class="options-list">
+                        <label>Options (mark correct answer with *):</label>
+                        <div class="option-input">
+                            <input type="text" id="option${questionId}-0" placeholder="Option 1 (* for correct answer)">
+                            <button class="remove-option" onclick="removeOption(this)">Remove</button>
+                        </div>
+                        <div class="option-input">
+                            <input type="text" id="option${questionId}-1" placeholder="Option 2 (* for correct answer)">
+                            <button class="remove-option" onclick="removeOption(this)">Remove</button>
+                        </div>
+                    </div>
+                    <button class="add-option" onclick="addNewOption(${questionId})">Add Option</button>
+                `;
+            }
+            
+            quizData.questions[questionId].type = type;
+        }
+        
+        // Add new option to a question
+        function addNewOption(questionId) {
+            const optionsList = document.querySelector(`#optionsContainer${questionId} .options-list`);
+            const optionCount = optionsList.children.length - 1; // Subtract 1 for the label
+            
+            const optionDiv = document.createElement('div');
+            optionDiv.className = 'option-input';
+            optionDiv.innerHTML = `
+                <input type="text" id="option${questionId}-${optionCount}" placeholder="Option ${optionCount + 1} (* for correct answer)">
+                <button class="remove-option" onclick="removeOption(this)">Remove</button>
+            `;
+            
+            optionsList.appendChild(optionDiv);
+        }
+        
+        // Remove an option
+        function removeOption(button) {
+            const optionDiv = button.parentElement;
+            optionDiv.remove();
+        }
+        
+        // Remove a question
+        function removeQuestion(questionId) {
+            // Remove from DOM
+            const questionElements = document.querySelectorAll('.question');
+            questionElements[questionId].remove();
+            
+            // Remove from quiz data
+            quizData.questions.splice(questionId, 1);
+            
+            // Update remaining question IDs
+            quizData.questions.forEach((q, index) => {
+                q.id = index;
+            });
+            
+            // Refresh questions display
+            questionsContainer.innerHTML = '';
+            quizData.questions.forEach((q, index) => {
+                const questionDiv = document.createElement('div');
+                questionDiv.className = 'question';
+                questionDiv.innerHTML = `
+                    <h3>Question ${index + 1}</h3>
+                    <div>
+                        <label>Question Text:</label>
+                        <textarea id="questionText${index}">${q.text}</textarea>
+                    </div>
+                    <div>
+                        <label>Question Type:</label>
+                        <select id="questionType${index}">
+                            <option value="multiple" ${q.type === 'multiple' ? 'selected' : ''}>Multiple Choice</option>
+                            <option value="truefalse" ${q.type === 'truefalse' ? 'selected' : ''}>True/False</option>
+                            <option value="shortanswer" ${q.type === 'shortanswer' ? 'selected' : ''}>Short Answer</option>
+                        </select>
+                    </div>
+                    <div id="optionsContainer${index}" class="options">
+                        ${generateOptionsHtml(index, q)}
+                    </div>
+                    <button onclick="removeQuestion(${index})">Remove Question</button>
+                `;
+                
+                questionsContainer.appendChild(questionDiv);
+                
+                // Update question type event listener
+                document.getElementById(`questionType${index}`).addEventListener('change', function() {
+                    updateQuestionType(index, this.value);
+                });
+            });
+        }
+        
+        // Generate options HTML based on question type
+        function generateOptionsHtml(questionId, question) {
+            if (question.type === 'truefalse') {
+                return `
+                    <label>Options:</label>
+                    <div class="option-input">
+                        <input type="text" id="option${questionId}-0" value="True" readonly>
+                    </div>
+                    <div class="option-input">
+                        <input type="text" id="option${questionId}-1" value="False" readonly>
+                    </div>
+                    <label>Correct Answer:</label>
+                    <select id="correctAnswer${questionId}">
+                        <option value="0" ${question.correctAnswer === '0' ? 'selected' : ''}>True</option>
+                        <option value="1" ${question.correctAnswer === '1' ? 'selected' : ''}>False</option>
+                    </select>
+                `;
+            } else if (question.type === 'shortanswer') {
+                return `
+                    <label>Correct Answer:</label>
+                    <input type="text" id="correctAnswer${questionId}" value="${question.correctAnswer || ''}" placeholder="Enter correct answer">
+                `;
+            } else {
+                let optionsHtml = '<div class="options-list"><label>Options (mark correct answer with *):</label>';
+                
+                question.options.forEach((opt, optIndex) => {
+                    const isCorrect = question.correctAnswer === optIndex.toString();
+                    optionsHtml += `
+                        <div class="option-input">
+                            <input type="text" id="option${questionId}-${optIndex}" value="${isCorrect ? '*' + opt : opt}">
+                            <button class="remove-option" onclick="removeOption(this)">Remove</button>
+                        </div>
+                    `;
+                });
+                
+                optionsHtml += '</div><button class="add-option" onclick="addNewOption(' + questionId + ')">Add Option</button>';
+                return optionsHtml;
+            }
+        }
+        
+        // Finish quiz creation and preview
+        function finishQuizCreation() {
+            // Collect all questions and answers
+            for (let i = 0; i < quizData.questions.length; i++) {
+                const question = quizData.questions[i];
+                question.text = document.getElementById(`questionText${i}`).value;
+                question.type = document.getElementById(`questionType${i}`).value;
+                
+                if (question.type === 'multiple') {
+                    // Get all options
+                    question.options = [];
+                    question.correctAnswer = '';
+                    
+                    const optionInputs = document.querySelectorAll(`#optionsContainer${i} input[type="text"]`);
+                    optionInputs.forEach((input, index) => {
+                        const optionText = input.value;
+                        if (optionText.startsWith('*')) {
+                            question.correctAnswer = index.toString();
+                            question.options.push(optionText.substring(1));
+                        } else {
+                            question.options.push(optionText);
+                        }
+                    });
+                } else if (question.type === 'truefalse') {
+                    question.options = ['True', 'False'];
+                    question.correctAnswer = document.getElementById(`correctAnswer${i}`).value;
+                } else if (question.type === 'shortanswer') {
+                    question.correctAnswer = document.getElementById(`correctAnswer${i}`).value.toLowerCase();
+                    question.options = [];
+                }
+            }
+            
+            // Filter out empty questions
+            quizData.questions = quizData.questions.filter(q => q.text.trim() !== '');
+            
+            if (quizData.questions.length === 0) {
+                alert('Please add at least one question');
+                return;
+            }
+            
+            // Initialize user answers
+            userAnswers = new Array(quizData.questions.length).fill(null);
+            
+            // Show preview
+            questionCreation.classList.add('hidden');
+            quizPreview.classList.remove('hidden');
+            
+            document.getElementById('previewQuizTitle').textContent = quizData.title;
+            document.getElementById('previewQuizDescription').textContent = quizData.description;
+            
+            renderQuestion(currentQuestionIndex);
+            updateProgressBar();
+        }
+        
+        // Render a question in preview mode
+        function renderQuestion(index) {
+            quizQuestionsPreview.innerHTML = '';
+            
+            if (index >= quizData.questions.length) return;
+            
+            const question = quizData.questions[index];
+            const questionDiv = document.createElement('div');
+            questionDiv.className = 'question';
+            
+            let optionsHtml = '';
+            if (question.type === 'multiple') {
+                optionsHtml = question.options.map((opt, optIndex) => {
+                    const isSelected = userAnswers[index] === optIndex.toString();
+                    return `
+                        <div class="option ${isSelected ? 'selected' : ''}" 
+                             onclick="selectOption(${index}, ${optIndex})">
+                            ${opt}
+                        </div>
+                    `;
+                }).join('');
+            } else if (question.type === 'truefalse') {
+                optionsHtml = `
+                    <div class="option ${userAnswers[index] === '0' ? 'selected' : ''}" 
+                         onclick="selectOption(${index}, 0)">
+                        True
+                    </div>
+                    <div class="option ${userAnswers[index] === '1' ? 'selected' : ''}" 
+                         onclick="selectOption(${index}, 1)">
+                        False
+                    </div>
+                `;
+            } else if (question.type === 'shortanswer') {
+                optionsHtml = `
+                    <input type="text" id="shortAnswer${index}" 
+                           placeholder="Your answer..." 
+                           value="${userAnswers[index] || ''}"
+                           oninput="updateShortAnswer(${index}, this.value)">
+                `;
+            }
+            
+            questionDiv.innerHTML = `
+                <h3>Question ${index + 1}</h3>
+                <p>${question.text}</p>
+                <div class="question-type">Type: ${getQuestionTypeName(question.type)}</div>
+                <div class="options">${optionsHtml}</div>
+            `;
+            
+            quizQuestionsPreview.appendChild(questionDiv);
+            
+            // Update navigation buttons
+            prevQuestionBtn.disabled = index === 0;
+            nextQuestionBtn.disabled = index === quizData.questions.length - 1;
+            submitQuizBtn.classList.toggle('hidden', index !== quizData.questions.length - 1);
+        }
+        
+        // Get question type name
+        function getQuestionTypeName(type) {
+            switch(type) {
+                case 'multiple': return 'Multiple Choice';
+                case 'truefalse': return 'True/False';
+                case 'shortanswer': return 'Short Answer';
+                default: return type;
+            }
+        }
+        
+        // Select an option
+        function selectOption(questionIndex, optionIndex) {
+            userAnswers[questionIndex] = optionIndex.toString();
+            renderQuestion(questionIndex);
+        }
+        
+        // Update short answer
+        function updateShortAnswer(questionIndex, answer) {
+            userAnswers[questionIndex] = answer;
+        }
+        
+        // Show previous question
+        function showPreviousQuestion() {
+            if (currentQuestionIndex > 0) {
+                currentQuestionIndex--;
+                renderQuestion(currentQuestionIndex);
+                updateProgressBar();
+            }
+        }
+        
+        // Show next question
+        function showNextQuestion() {
+            if (currentQuestionIndex < quizData.questions.length - 1) {
+                currentQuestionIndex++;
+                renderQuestion(currentQuestionIndex);
+                updateProgressBar();
+            }
+        }
+        
+        // Update progress bar
+        function updateProgressBar() {
+            const progress = ((currentQuestionIndex + 1) / quizData.questions.length) * 100;
+            document.getElementById('quizProgress').style.width = `${progress}%`;
+        }
+        
+        // Show quiz results
+        function showResults() {
+            quizScore = 0;
+            resultsDetails.innerHTML = '';
+            
+            quizData.questions.forEach((question, index) => {
+                const isCorrect = checkAnswer(question, userAnswers[index]);
+                if (isCorrect) quizScore++;
+                
+                const resultDiv = document.createElement('div');
+                resultDiv.className = `question ${isCorrect ? 'correct' : 'incorrect'}`;
+                
+                let userAnswerText = '';
+                if (question.type === 'multiple') {
+                    userAnswerText = question.options[parseInt(userAnswers[index])] || 'No answer';
+                } else if (question.type === 'truefalse') {
+                    userAnswerText = userAnswers[index] === '0' ? 'True' : 'False';
+                } else {
+                    userAnswerText = userAnswers[index] || 'No answer';
+                }
+                
+                let correctAnswerText = '';
+                if (question.type === 'multiple') {
+                    correctAnswerText = question.options[parseInt(question.correctAnswer)];
+                } else if (question.type === 'truefalse') {
+                    correctAnswerText = question.correctAnswer === '0' ? 'True' : 'False';
+                } else {
+                    correctAnswerText = question.correctAnswer;
+                }
+                
+                resultDiv.innerHTML = `
+                    <h3>Question ${index + 1}: ${isCorrect ? 'Correct' : 'Incorrect'}</h3>
+                    <p>${question.text}</p>
+                    <p><strong>Your answer:</strong> ${userAnswerText}</p>
+                    ${!isCorrect ? `<p><strong>Correct answer:</strong> ${correctAnswerText}</p>` : ''}
+                `;
+                
+                resultsDetails.appendChild(resultDiv);
+            });
+            
+            document.getElementById('finalScore').textContent = quizScore;
+            document.getElementById('totalQuestions').textContent = quizData.questions.length;
+            
+            // Calculate percentage
+            const percentage = Math.round((quizScore / quizData.questions.length) * 100);
+            let message = '';
+            
+            if (percentage >= 80) {
+                message = 'Excellent work! You scored an A!';
+            } else if (percentage >= 70) {
+                message = 'Good job! You scored a B!';
+            } else if (percentage >= 60) {
+                message = 'Not bad! You scored a C.';
+            } else if (percentage >= 50) {
+                message = 'You passed, but consider reviewing the material.';
+            } else {
+                message = 'Keep practicing! You\'ll do better next time.';
+            }
+            
+            document.getElementById('resultMessage').textContent = message;
+            
+            quizPreview.classList.add('hidden');
+            quizResults.classList.remove('hidden');
+        }
+        
+        // Check if an answer is correct
+        function checkAnswer(question, userAnswer) {
+            if (question.type === 'shortanswer') {
+                return userAnswer && userAnswer.toLowerCase() === question.correctAnswer.toLowerCase();
+            } else {
+                return userAnswer === question.correctAnswer;
+            }
+        }
+        
+        // Retake the quiz
+        function retakeQuiz() {
+            currentQuestionIndex = 0;
+            userAnswers = new Array(quizData.questions.length).fill(null);
+            
+            quizResults.classList.add('hidden');
+            quizPreview.classList.remove('hidden');
+            
+            renderQuestion(currentQuestionIndex);
+            updateProgressBar();
+        }
+        
+        // Create a new quiz
+        function createNewQuiz() {
+            // Reset quiz data
+            quizData = {
+                title: '',
+                description: '',
+                questions: []
+            };
+            
+            currentQuestionIndex = 0;
+            userAnswers = [];
+            quizScore = 0;
+            
+            // Reset UI
+            document.getElementById('quizTitle').value = '';
+            document.getElementById('quizDescription').value = '';
+            questionsContainer.innerHTML = '';
+            resultsDetails.innerHTML = '';
+            
+            quizResults.classList.add('hidden');
+            quizSetup.classList.remove('hidden');
+            
+            // Add first question
+            addQuestion();
+        }
+        
+        // Initialize the application
+        init();
+        
+        // Make functions available globally for HTML onclick attributes
+        window.addNewOption = addNewOption;
+        window.removeOption = removeOption;
+        window.removeQuestion = removeQuestion;
+        window.selectOption = selectOption;
+        window.updateShortAnswer = updateShortAnswer;
+    </script>
+</body>
+</html>
